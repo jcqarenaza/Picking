@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script>
+  (function () {
+    const PASSWORD = "tinchohacker"; // <-- cambiá esto
+
+    const input = prompt("🔐 Ingresá la contraseña");
+    if (input !== PASSWORD) {
+      document.documentElement.innerHTML = "";
+      alert("Acceso denegado");
+    }
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PICKS EN 0 — CONTROL DE DEPÓSITOS</title>
