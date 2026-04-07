@@ -768,6 +768,12 @@ function renderDepCards() {
     const efUspTodo = efDepTodo.reduce((s,r)=>s+r.usp,0);
     const px1000Dia = efUdsDia ? Math.round(efUspDia/efUdsDia*1000) : null;
     const px1000Sem = efUdsSem ? Math.round(efUspSem/efUdsSem*1000) : null;
+    // x1000 semana anterior
+    const efDepSemAnt  = efRecords.filter(r=>r.dep===k && r.fecha>=semAnt && r.fecha<semActual);
+    const efUdsSemAnt  = efDepSemAnt.reduce((s,r)=>s+r.uds,0);
+    const efUspSemAnt  = efDepSemAnt.reduce((s,r)=>s+r.usp,0);
+    const px1000SemAnt = efUdsSemAnt ? Math.round(efUspSemAnt/efUdsSemAnt*1000) : null;
+    const diffPx1000Sem = (px1000Sem!==null && px1000SemAnt!==null) ? px1000Sem - px1000SemAnt : null;
     // x1000 mes actual
     const efDepMes  = efRecords.filter(r=>r.dep===k && r.fecha>=mesActualInicio);
     const efUdsMes  = efDepMes.reduce((s,r)=>s+r.uds,0);
@@ -821,7 +827,7 @@ function renderDepCards() {
     </div>` : '';
 
     return `<div class="dep-card ${cls}">
-      <div class="dep-card-top" onclick="openModal('${k}')">
+      <div class="dep-card-top" onclick="openModal('${k}')" ondblclick="event.stopPropagation();(function(el){var d=el.closest('.dep-card').querySelector('.dep-x1000-det');if(d)d.style.display=d.style.display==='none'?'block':'none';})(this)">
         <div class="dep-card-label" style="display:flex;align-items:center;gap:8px;">
           ${DEP_LABEL[k]}
           ${(()=>{
@@ -847,10 +853,6 @@ function renderDepCards() {
                 <div style="font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:#bbb;font-family:'Share Tech Mono',monospace;margin-top:3px;">Unidades</div>
                 ${diffMesUni!==null?`<div style="font-size:.65rem;font-weight:700;margin-top:2px;color:${diffMesUni>0?'#E53E3E':diffMesUni<0?'#68D391':'#aaa'};">${diffMesUni>0?'↑':'↓'} ${Math.abs(diffMesUni)}% vs ${mesAntLabel}</div>`:''}
               </div>
-              ${px1000Mes!==null?`<div style="text-align:center;">
-                <div style="font-size:2.4rem;font-weight:900;line-height:1;color:${px1000Mes===0?'#48BB78':px1000Mes<=5?'#D69E2E':'#E53E3E'};">${px1000Mes}</div>
-                <div style="font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:#bbb;font-family:'Share Tech Mono',monospace;margin-top:3px;">x1000</div>
-              </div>`:''}
             </div>
           </div>
           <!-- ULT DIA -->
@@ -866,10 +868,6 @@ function renderDepCards() {
                 <div style="font-size:2.4rem;font-weight:900;line-height:1;color:#ccc;">${ayerUni||'—'}</div>
                 <div style="font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:#bbb;font-family:'Share Tech Mono',monospace;margin-top:3px;">Unidades</div>
               </div>
-              ${px1000Dia!==null?`<div style="text-align:center;">
-                <div style="font-size:2.4rem;font-weight:900;line-height:1;color:${px1000Dia===0?'#48BB78':px1000Dia<=5?'#D69E2E':'#E53E3E'};">${px1000Dia}</div>
-                <div style="font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:#bbb;font-family:'Share Tech Mono',monospace;margin-top:3px;">x1000</div>
-              </div>`:''}
             </div>
           </div>
         </div>
@@ -888,13 +886,28 @@ function renderDepCards() {
               <div style="font-size:1.1rem;font-weight:900;color:var(--dc);">${uniSemAct}</div>
               ${diffUni!==null?`<div style="font-size:.65rem;font-weight:700;color:${diffUni>0?'#E53E3E':diffUni<0?'#68D391':'#aaa'};">${diffUni>0?'↑':'↓'} ${Math.abs(diffUni)}%</div>`:''}
             </div>
-            ${px1000Sem!==null?`<div style="flex:1;text-align:center;">
-              <div style="font-size:.6rem;color:#bbb;font-family:'Share Tech Mono',monospace;">x1000</div>
-              <div style="font-size:1.1rem;font-weight:900;color:${px1000Sem===0?'#48BB78':px1000Sem<=5?'#D69E2E':'#E53E3E'};">${px1000Sem}</div>
-            </div>`:''}
           </div>
         </div>`:''}
-        <div class="kpi-hint">▶ VER DETALLE</div>
+        <!-- x1000 detalle al doble click — oculto por defecto -->
+        <div class="dep-x1000-det" style="display:none;border-top:1px solid var(--border);margin-top:6px;padding-top:6px;">
+          <div style="font-size:.55rem;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;font-family:'Share Tech Mono',monospace;margin-bottom:6px;">Picks × 1000 por período</div>
+          <div style="display:flex;gap:8px;">
+            ${px1000Dia!==null?`<div style="flex:1;text-align:center;">
+              <div style="font-size:.6rem;color:#bbb;font-family:'Share Tech Mono',monospace;">Últ. día</div>
+              <div style="font-size:1.3rem;font-weight:900;color:${px1000Dia===0?'#48BB78':px1000Dia<=5?'#D69E2E':'#E53E3E'};">${px1000Dia}</div>
+            </div>`:''}
+            ${px1000Sem!==null?`<div style="flex:1;text-align:center;">
+              <div style="font-size:.6rem;color:#bbb;font-family:'Share Tech Mono',monospace;">Semana</div>
+              <div style="font-size:1.3rem;font-weight:900;color:${px1000Sem===0?'#48BB78':px1000Sem<=5?'#D69E2E':'#E53E3E'};">${px1000Sem}</div>
+              ${diffPx1000Sem!==null?`<div style="font-size:.65rem;font-weight:700;color:${diffPx1000Sem>0?'#E53E3E':diffPx1000Sem<0?'#48BB78':'#aaa'};">${diffPx1000Sem>0?'↑':'↓'} ${Math.abs(diffPx1000Sem)} vs ant.</div>`:''}
+            </div>`:''}
+            ${px1000Mes!==null?`<div style="flex:1;text-align:center;">
+              <div style="font-size:.6rem;color:#bbb;font-family:'Share Tech Mono',monospace;">Mes</div>
+              <div style="font-size:1.3rem;font-weight:900;color:${px1000Mes===0?'#48BB78':px1000Mes<=5?'#D69E2E':'#E53E3E'};">${px1000Mes}</div>
+            </div>`:''}
+          </div>
+        </div>
+        <div class="kpi-hint">▶ VER DETALLE · 2× x1000</div>
       </div>
       <div class="dep-card-stats">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 4px;cursor:pointer;user-select:none;" ondblclick="toggleDepCats(this)">
@@ -1084,12 +1097,14 @@ function fmtEfTime(mins) {
 }
 
 function toggleDepCats(el) {
-  const body = el.parentElement.querySelector('.dep-cats-body');
-  if (!body) return;
-  const open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  const hint = el.querySelector('span:last-child');
-  if (hint) hint.textContent = open ? '2× ver' : '2× ocultar';
+  // Expande/colapsa categorías en TODOS los depósitos a la vez
+  const allCards = document.querySelectorAll('.dep-cats-body');
+  const isOpen = el.parentElement.querySelector('.dep-cats-body').style.display !== 'none';
+  allCards.forEach(body => { body.style.display = isOpen ? 'none' : 'block'; });
+  document.querySelectorAll('.dep-card-stats [ondblclick]').forEach(header => {
+    const hint = header.querySelector('span:last-child');
+    if (hint) hint.textContent = isOpen ? '2× ver' : '2× ocultar';
+  });
 }
 
 function toggleUserDetalle(el) {
@@ -1941,6 +1956,7 @@ async function importEficiencia(wb, fecha, sheetName) {
       if (idx>=0) efRecords[idx] = r; else efRecords.push(r);
     });
     renderEficiencia();
+    renderDepCards(); // actualizar x1000 en tarjetas
     if (SHEET_URL) {
       try {
         const efRes = await apiCall({action:'upsertEficiencia', records:batch});
@@ -1978,6 +1994,7 @@ async function fetchEficiencia() {
         });
       }
       renderEficiencia();
+      renderDepCards(); // actualizar tarjetas con x1000 ahora que efRecords está listo
     }
   } catch(e) { console.error('fetchEficiencia:', e); }
 }
