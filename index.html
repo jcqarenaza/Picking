@@ -689,6 +689,26 @@ function renderDepCards() {
     const ayerUni    = ayerRecs.reduce((s,r)=>s+(parseInt(r.stock)||0),0);
     const ayerLabel  = ayerFecha ? ayerFecha.slice(8,10)+'/'+ayerFecha.slice(5,7) : '';
 
+    // Mes actual (desde el 1° del mes calendario actual)
+    const mesActualInicio = today.slice(0,7)+'-01'; // ej: "2026-04-01"
+    // Mes anterior: restar 1 mes al año/mes actual
+    const _mA = parseInt(today.slice(5,7)); // mes actual: 4 para abril
+    const _yA = parseInt(today.slice(0,4)); // año actual
+    const _mAnt = _mA === 1 ? 12 : _mA - 1;
+    const _yAnt = _mA === 1 ? _yA - 1 : _yA;
+    const mesAntInicio = `${_yAnt}-${String(_mAnt).padStart(2,'0')}-01`;
+    const mesAntFin    = mesActualInicio; // exclusivo
+
+    const recsMesAct = depRecs.filter(r=>r.fecha>=mesActualInicio);
+    const recsMesAnt = depRecs.filter(r=>r.fecha>=mesAntInicio && r.fecha<mesAntFin);
+    const codMesAct  = recsMesAct.length;
+    const uniMesAct  = recsMesAct.reduce((s,r)=>s+(parseInt(r.stock)||0),0);
+    const codMesAnt  = recsMesAnt.length;
+    const uniMesAnt  = recsMesAnt.reduce((s,r)=>s+(parseInt(r.stock)||0),0);
+    const diffMesCod = codMesAnt  ? Math.round((codMesAct-codMesAnt)/codMesAnt*100)  : null;
+    const diffMesUni = uniMesAnt  ? Math.round((uniMesAct-uniMesAnt)/uniMesAnt*100) : null;
+    const mesActLabel = new Date(mesActualInicio+'T12:00:00').toLocaleString('es-AR',{month:'short',year:'2-digit'}).toUpperCase();
+    const mesAntLabel = new Date(mesAntInicio+'T12:00:00').toLocaleString('es-AR',{month:'short',year:'2-digit'}).toUpperCase();
     // Comparativa semana actual vs semana anterior
     const semActual = getStartOfWeek();
     const semAntD   = new Date(semActual); semAntD.setDate(semAntD.getDate()-7);
@@ -773,17 +793,20 @@ function renderDepCards() {
           })()}
         </div>
         <div style="display:flex;gap:0;margin-bottom:6px;width:100%;">
-          <!-- TOTALES -->
+          <!-- MES ACTUAL vs MES ANTERIOR -->
           <div style="flex:1;text-align:center;padding-right:12px;border-right:1px solid var(--border);">
-            <div style="font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:#aaa;font-family:'Share Tech Mono',monospace;margin-bottom:5px;">Totales</div>
+            <div style="font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:#aaa;font-family:'Share Tech Mono',monospace;margin-bottom:2px;">Mes Actual</div>
+            <div style="font-size:.62rem;font-family:'Share Tech Mono',monospace;color:#bbb;margin-bottom:4px;">${mesActLabel}</div>
             <div style="display:flex;justify-content:center;gap:20px;">
               <div style="text-align:center;">
-                <div style="font-size:2.4rem;font-weight:900;line-height:1;color:#3a3f52;">${tot}</div>
+                <div style="font-size:2.4rem;font-weight:900;line-height:1;color:#3a3f52;">${codMesAct}</div>
                 <div style="font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:#bbb;font-family:'Share Tech Mono',monospace;margin-top:3px;">Códigos</div>
+                ${diffMesCod!==null?`<div style="font-size:.65rem;font-weight:700;margin-top:2px;color:${diffMesCod>0?'#E53E3E':diffMesCod<0?'#68D391':'#aaa'};">${diffMesCod>0?'↑':'↓'} ${Math.abs(diffMesCod)}% vs ${mesAntLabel}</div>`:''}
               </div>
               <div style="text-align:center;">
-                <div style="font-size:2.4rem;font-weight:900;line-height:1;color:var(--dc);">${totUni}</div>
+                <div style="font-size:2.4rem;font-weight:900;line-height:1;color:var(--dc);">${uniMesAct}</div>
                 <div style="font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:#bbb;font-family:'Share Tech Mono',monospace;margin-top:3px;">Unidades</div>
+                ${diffMesUni!==null?`<div style="font-size:.65rem;font-weight:700;margin-top:2px;color:${diffMesUni>0?'#E53E3E':diffMesUni<0?'#68D391':'#aaa'};">${diffMesUni>0?'↑':'↓'} ${Math.abs(diffMesUni)}% vs ${mesAntLabel}</div>`:''}
               </div>
             </div>
           </div>
