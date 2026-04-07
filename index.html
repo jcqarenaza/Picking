@@ -316,12 +316,7 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--mu
   <div class="modal" id="modal-box">
     <div class="modal-header">
       <div class="modal-title" id="modal-title">DEPÓSITO</div>
-      <div id="modal-ef-bar" style="display:none;font-family:'Share Tech Mono',monospace;font-size:.7rem;color:#888;display:flex;gap:16px;align-items:center;">
-        <span>⚡ <b id="modal-ef-x1000" style="color:#3a3f52;">—</b> x1000</span>
-        <span>⏱ <b id="modal-ef-tcod" style="color:#3a3f52;">—</b>/cód</span>
-        <span>📦 <b id="modal-ef-tped" style="color:#3a3f52;">—</b>/ped</span>
-        <span style="font-size:.65rem;color:#bbb;" id="modal-ef-label"></span>
-      </div>
+      <div id="modal-ef-bar" style="display:none;align-items:center;gap:8px;"></div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-filters">
@@ -1255,25 +1250,18 @@ function renderMotivoList(data) {
 //  MODAL
 // ============================================================
 function openModal(dep) {
-  // Populate eficiencia bar with current week data for this dep
-  const semActual = getStartOfWeek();
-  const efDep = efRecords.filter(r=>r.dep===dep && r.fecha>=semActual);
-  const efBar = document.getElementById('modal-ef-bar');
-  if (efDep.length && efBar) {
-    const totalUds = efDep.reduce((s,r)=>s+r.uds,0);
-    const totalUsp = efDep.reduce((s,r)=>s+r.usp,0);
-    const px1000 = totalUds ? Math.round(totalUsp/totalUds*1000) : 0;
-    const avgCod = totalUds ? efDep.reduce((s,r)=>s+(r.promCod/60*r.uds),0)/totalUds : 0;
-    const avgPed = totalUds ? efDep.reduce((s,r)=>s+(r.promPed/60*r.uds),0)/totalUds : 0;
-    const dotColor = px1000===0?'#68D391':px1000<=5?'#D69E2E':'#E53E3E';
-    const x1000El = document.getElementById('modal-ef-x1000');
-    const tcodEl  = document.getElementById('modal-ef-tcod');
-    const tpedEl  = document.getElementById('modal-ef-tped');
-    const lblEl   = document.getElementById('modal-ef-label');
-    if(x1000El) x1000El.textContent = px1000; if(x1000El) x1000El.style.color = dotColor;
-    if(tcodEl)  tcodEl.textContent  = fmtEfTime(avgCod);
-    if(tpedEl)  tpedEl.textContent  = fmtEfTime(avgPed);
-    if(lblEl)   lblEl.textContent   = 'semana · ' + totalUds.toLocaleString() + ' uds';
+  // x1000 del último día cargado en eficiencia para este dep
+  const efUltFecha = [...new Set(efRecords.map(r=>r.fecha))].filter(f=>f&&f<today).sort().reverse()[0]||'';
+  const efDepAyer  = efRecords.filter(r=>r.dep===dep && r.fecha===efUltFecha);
+  const efBar      = document.getElementById('modal-ef-bar');
+  if (efDepAyer.length && efBar) {
+    const totalUds = efDepAyer.reduce((s,r)=>s+r.uds,0);
+    const totalUsp = efDepAyer.reduce((s,r)=>s+r.usp,0);
+    const px1000   = totalUds ? Math.round(totalUsp/totalUds*1000) : 0;
+    const bgColor  = px1000===0?'rgba(72,187,120,.15)':px1000<=5?'rgba(214,158,46,.15)':'rgba(229,62,62,.15)';
+    const txColor  = px1000===0?'#2f855a':px1000<=5?'#975a16':'#c53030';
+    efBar.innerHTML = `<span style="font-size:.7rem;color:#aaa;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;">PICKS x1000 (ayer)</span>
+      <span style="background:${bgColor};color:${txColor};font-weight:700;font-size:.9rem;padding:3px 12px;border-radius:4px;font-family:'Share Tech Mono',monospace;">${px1000}</span>`;
     efBar.style.display = 'flex';
   } else if (efBar) {
     efBar.style.display = 'none';
