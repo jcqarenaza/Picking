@@ -288,9 +288,10 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--mu
         <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
           <button class="rank-tab active" data-ef-tab data-ef-period="ayer" onclick="setEfTab(this,'ayer')">AYER</button>
           <button class="rank-tab" data-ef-tab data-ef-period="semana" onclick="setEfTab(this,'semana')">SEMANA</button>
-          <button class="rank-tab" data-ef-tab data-ef-period="mes" onclick="setEfTab(this,'mes')">30 DÍAS</button>
-          <button class="rank-tab" data-ef-tab data-ef-period="fecha" onclick="setEfTab(this,'fecha')" id="ef-tab-fecha">FECHA</button>
-          <input type="date" id="ef-fecha-picker" style="display:none;font-family:'Share Tech Mono',monospace;font-size:.72rem;border:1px solid var(--border);border-radius:3px;padding:2px 6px;background:#fff;color:#3a3f52;" onchange="setEfTab(document.getElementById('ef-tab-fecha'),'fecha')">
+          <button class="rank-tab" data-ef-tab data-ef-period="mes" onclick="setEfTab(this,'mes')">MES</button>
+          <select id="ef-mes-picker" class="rank-tab" style="font-family:'Share Tech Mono',monospace;font-size:.68rem;padding:3px 6px;cursor:pointer;" onchange="setEfTab(document.querySelector('[data-ef-period=mes]'),'mes-pick')">
+            <option value="">— Mes —</option>
+          </select>
         </div>
       </div>
       <div class="panel-body" id="ef-content" style="max-height:none;overflow-y:visible;">
@@ -329,9 +330,12 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--mu
     </div>
     <div class="modal-filters">
       <button class="tab-btn active" id="tab-ayer" onclick="setTab('ayer')">AYER</button>
-      <button class="tab-btn" id="tab-semana" onclick="setTab('semana')">ESTA SEMANA</button>
-      <button class="tab-btn" id="tab-mes" onclick="setTab('mes')">ESTE MES</button>
+      <button class="tab-btn" id="tab-semana" onclick="setTab('semana')">SEMANA</button>
+      <button class="tab-btn" id="tab-mes" onclick="setTab('mes')">MES</button>
       <button class="tab-btn" id="tab-todo" onclick="setTab('todo')">TODOS</button>
+      <select id="modal-mes-picker" class="tab-btn" style="font-family:'Share Tech Mono',monospace;font-size:.68rem;cursor:pointer;" onchange="setTab('mes-pick')">
+        <option value="">— Mes —</option>
+      </select>
       <input class="tab-search" id="modal-search" type="text" placeholder="Buscar SKU..." oninput="renderModal()">
     </div>
     <div class="modal-body">
@@ -477,6 +481,7 @@ async function fetchFromSheet() {
       // Actualizar contador y tarjetas de inmediato
       const _tc = document.getElementById('total-count'); if(_tc) _tc.textContent = records.length;
       renderDepCards();
+      populateMonthPicker('modal-mes-picker', records);
       // Modal si está abierto
       if (modalDep) renderModal();
       // Resto diferido para no bloquear el paint
@@ -1086,11 +1091,16 @@ function toggleMoreUsers() {
 
 
 function setEfTab(btn, period) {
-  document.querySelectorAll('[data-ef-tab]').forEach(b=>{
-    b.className='rank-tab'+(b===btn?' active':'');
+  document.querySelectorAll('[data-ef-tab]').forEach(b => {
+    b.className = 'rank-tab' + (b===btn ? ' active' : '');
   });
-  const picker = document.getElementById('ef-fecha-picker');
-  if (picker) picker.style.display = period==='fecha' ? 'inline-block' : 'none';
+  // Si eligió mes del selector, activar visualmente el botón MES
+  if (period === 'mes-pick') {
+    const mesBtn = document.querySelector('[data-ef-period="mes"]');
+    if (mesBtn) { document.querySelectorAll('[data-ef-tab]').forEach(b=>b.className='rank-tab'); mesBtn.className='rank-tab active'; }
+  }
+  // Poblar selector de mes con meses disponibles en efRecords
+  populateMonthPicker('ef-mes-picker', efRecords);
   renderEficiencia();
 }
 
@@ -1353,23 +1363,61 @@ function closeModal(){ document.getElementById('modal-overlay').classList.remove
 function outsideClose(e){ if(e.target===document.getElementById('modal-overlay')) closeModal(); }
 
 function setTab(t) {
-  activeTab=t;
-  ['ayer','semana','mes','todo'].forEach(x=>{ const el=document.getElementById('tab-'+x); if(el) el.className='tab-btn'+(t===x?' active':''); });
+  activeTab = t;
+  ['ayer','semana','mes','todo'].forEach(x => {
+    const el = document.getElementById('tab-'+x);
+    if (el) el.className = 'tab-btn' + ((t===x || (t==='mes-pick' && x==='mes')) ? ' active' : '');
+  });
   renderModal();
+}
+
+function getMesPick(pickerId) {
+  const sel = document.getElementById(pickerId);
+  return sel ? sel.value : '';
+}
+
+function populateMonthPicker(pickerId, recs) {
+  const sel = document.getElementById(pickerId);
+  if (!sel) return;
+  const meses = [...new Set(recs.map(r => r.fecha ? r.fecha.slice(0,7) : ''))].filter(Boolean).sort().reverse();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Mes —</option>' + meses.map(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(parseInt(y), parseInt(mo)-1, 15).toLocaleString('es-AR',{month:'short',year:'2-digit'}).toUpperCase();
+    return `<option value="${m}" ${m===cur?'selected':''}>${label}</option>`;
+  }).join('');
 }
 
 function renderModal() {
   if (!modalDep) return;
-  let filtered=records.filter(r=>r.dep===modalDep);
-  const now=new Date();
-  if(activeTab==='ayer'){
-    // último día con datos cargados, excluyendo hoy (sistema a día vencido)
-    const fechas=[...new Set(filtered.map(r=>r.fecha))].filter(f=>f && f<today).sort().reverse();
-    const ayF=fechas[0]||'';
-    filtered=ayF ? filtered.filter(r=>r.fecha===ayF) : [];
+  let filtered = records.filter(r => r.dep === modalDep);
+
+  // Poblar selector de mes con los meses disponibles para este dep
+  populateMonthPicker('modal-mes-picker', filtered);
+
+  const now = new Date();
+  if (activeTab === 'ayer') {
+    const fechas = [...new Set(filtered.map(r=>r.fecha))].filter(f=>f && f<today).sort().reverse();
+    const ayF = fechas[0] || '';
+    filtered = ayF ? filtered.filter(r => r.fecha === ayF) : [];
   }
-  else if(activeTab==='semana'){filtered=filtered.filter(r=>r.fecha>=getStartOfWeek());}
-  else if(activeTab==='mes'){const d=new Date(now);d.setDate(d.getDate()-30);filtered=filtered.filter(r=>r.fecha>=d.toISOString().split('T')[0]);}
+  else if (activeTab === 'semana') {
+    // Lunes a sábado de la semana actual
+    const lunes = getStartOfWeek();
+    const sabD  = new Date(lunes); sabD.setDate(sabD.getDate() + 5);
+    const sab   = sabD.toISOString().split('T')[0];
+    filtered = filtered.filter(r => r.fecha >= lunes && r.fecha <= sab);
+  }
+  else if (activeTab === 'mes') {
+    // Mes calendario actual (1° al último día)
+    const mesInicio = today.slice(0,7) + '-01';
+    const mesFin    = today.slice(0,7) + '-31'; // max
+    filtered = filtered.filter(r => r.fecha >= mesInicio && r.fecha <= mesFin);
+  }
+  else if (activeTab === 'mes-pick') {
+    const m = getMesPick('modal-mes-picker');
+    if (m) filtered = filtered.filter(r => r.fecha && r.fecha.slice(0,7) === m);
+  }
   const q=document.getElementById('modal-search').value.trim().toUpperCase();
   if(q) filtered=filtered.filter(r=>r.sku.includes(q)||(r.usuario||'').toUpperCase().includes(q));
   // sin motivo primero, luego por fecha más nueva
@@ -1965,6 +2013,8 @@ async function importEficiencia(wb, fecha, sheetName) {
     });
     renderEficiencia();
     renderDepCards(); // actualizar x1000 en tarjetas
+    populateMonthPicker('ef-mes-picker', efRecords);
+    populateMonthPicker('modal-mes-picker', records);
     if (SHEET_URL) {
       try {
         const efRes = await apiCall({action:'upsertEficiencia', records:batch});
@@ -2019,16 +2069,20 @@ function renderEficiencia() {
   const DEP_COLOR_EF = {PICO:'#f07878', MDP:'#b39ddb', BSAS:'#f59e42', ROSARIO:'#7bb3f5'};
 
   function efFilter(period) {
-    if (period==='ayer') {
-      const ultF = [...new Set(efRecords.map(r=>r.fecha))].filter(Boolean).sort().reverse()[0]||'';
+    if (period === 'ayer') {
+      const ultF = [...new Set(efRecords.map(r=>r.fecha))].filter(f=>f&&f<today).sort().reverse()[0]||'';
       return efRecords.filter(r=>r.fecha===ultF);
     }
-    if (period==='semana') return efRecords.filter(r=>r.fecha>=getStartOfWeek());
-    if (period==='mes')    return efRecords.filter(r=>r.fecha>=d30.toISOString().split('T')[0]);
-    if (period==='fecha') {
-      const picker = document.getElementById('ef-fecha-picker');
-      const sel = picker ? picker.value : '';
-      return sel ? efRecords.filter(r=>r.fecha===sel) : efRecords;
+    if (period === 'semana') {
+      const lunes = getStartOfWeek();
+      const sabD  = new Date(lunes); sabD.setDate(sabD.getDate()+5);
+      const sab   = sabD.toISOString().split('T')[0];
+      return efRecords.filter(r=>r.fecha>=lunes && r.fecha<=sab);
+    }
+    if (period === 'mes' || period === 'mes-pick') {
+      const m = period==='mes-pick' ? getMesPick('ef-mes-picker') : today.slice(0,7);
+      if (!m) return efRecords;
+      return efRecords.filter(r=>r.fecha && r.fecha.slice(0,7)===m);
     }
     return efRecords;
   }
@@ -2144,8 +2198,9 @@ function renderEficiencia() {
     </tbody>`;
   }
 
-  const efTab  = el.querySelector('[data-ef-tab].active')?.dataset?.efPeriod || 'ayer';
-  const data   = efFilter(efTab);
+  const efTabEl = el.querySelector('[data-ef-tab].active');
+  const efTab   = efTabEl ? (efTabEl.dataset.efPeriod === 'mes' && getMesPick('ef-mes-picker') ? 'mes-pick' : efTabEl.dataset.efPeriod) : 'ayer';
+  const data    = efFilter(efTab);
   const gen    = calcRows(data);
 
   // Último día cargado (para el label del header)
