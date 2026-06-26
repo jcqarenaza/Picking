@@ -424,7 +424,8 @@ async function fetchFromSheet() {
   isSyncing = true;
   try {
     const data = await apiCall({ action:'get' });
-    if (data.ts && data.ts > lastServerTs) {
+    const hasNewData = data.ts && data.ts > lastServerTs;
+    if (hasNewData) {
       setSyncStatus('loading','Sincronizando...');
       lastServerTs = data.ts;
       const incoming = (data.records || []).map(normalizeRecord);
@@ -439,6 +440,9 @@ async function fetchFromSheet() {
       renderDepCards();
       populateMonthPicker('modal-mes-picker', records);
       if (modalDep) renderModal();
+    }
+    // Siempre renderizar el chart si aún no existe (primera carga) o si hubo datos nuevos
+    if (hasNewData || !window._chart) {
       if (_chartRenderTimer) clearTimeout(_chartRenderTimer);
       _chartRenderTimer = setTimeout(() => {
         renderChart();
@@ -449,8 +453,7 @@ async function fetchFromSheet() {
         const logWrap = document.getElementById('log-body-wrap');
         if (logWrap && logWrap.style.display !== 'none') renderLog();
         _lastRenderHash = recordsHash();
-        // Segundo intento: forzar resize del chart por si el contenedor no tenía dimensiones al primer render
-        setTimeout(() => { if(window._chart) window._chart.resize(); }, 400);
+        setTimeout(() => { if(window._chart) window._chart.resize(); }, 300);
       }, 150);
     }
     const now = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
