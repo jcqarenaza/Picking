@@ -266,7 +266,9 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--mu
     <div class="panel">
       <div class="panel-head"><h2>📈 Evolución diaria — picks en 0</h2></div>
       <div class="panel-body">
-        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+        <div class="chart-wrap" style="height:220px;position:relative;width:100%;min-height:220px;">
+          <canvas id="lineChart" style="display:block;width:100%;height:220px;"></canvas>
+        </div>
         <canvas id="evoChart" style="display:none;"></canvas>
       </div>
     </div>
@@ -447,6 +449,8 @@ async function fetchFromSheet() {
         const logWrap = document.getElementById('log-body-wrap');
         if (logWrap && logWrap.style.display !== 'none') renderLog();
         _lastRenderHash = recordsHash();
+        // Segundo intento: forzar resize del chart por si el contenedor no tenía dimensiones al primer render
+        setTimeout(() => { if(window._chart) window._chart.resize(); }, 400);
       }, 150);
     }
     const now = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -672,11 +676,26 @@ function renderLog() {
 function renderChart() {
   const dm={};
   records.forEach(r=>{if(!dm[r.fecha])dm[r.fecha]={PICO:0,ROSARIO:0,MDP:0,BSAS:0};dm[r.fecha][r.dep]++;});
-  const dates=Object.keys(dm).sort().slice(-14), deps=['PICO','ROSARIO','MDP','BSAS'], ln={PICO:'Pico',ROSARIO:'Rosario',MDP:'Mar del Plata',BSAS:'Buenos Aires'};
+  const dates=Object.keys(dm).sort().slice(-30), deps=['PICO','ROSARIO','MDP','BSAS'], ln={PICO:'Pico',ROSARIO:'Rosario',MDP:'Mar del Plata',BSAS:'Buenos Aires'};
   const cv=document.getElementById('lineChart');
-  if(window._chart) window._chart.destroy();
-  if(!dates.length){window._chart=new Chart(cv,{type:'line',data:{labels:['Sin datos'],datasets:[{label:'',data:[0],borderColor:'#e2e6f0'}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a6478'}},y:{ticks:{color:'#5a6478'}}}}});return;}
-  window._chart=new Chart(cv,{type:'line',data:{labels:dates,datasets:deps.map(d=>({label:ln[d],data:dates.map(dt=>dm[dt]?.[d]||0),borderColor:DEP_COLOR[d],backgroundColor:DEP_COLOR[d]+'22',borderWidth:2,pointRadius:4,pointBackgroundColor:DEP_COLOR[d],tension:.3,fill:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a3f52',font:{family:'Barlow Condensed',size:12},boxWidth:12,padding:16}}},scales:{x:{ticks:{color:'#5a6478',font:{family:'Share Tech Mono',size:10}},grid:{color:'#e8ecf4'}},y:{ticks:{color:'#5a6478',font:{family:'Share Tech Mono',size:10}},grid:{color:'#e8ecf4'},beginAtZero:true,precision:0}}}});
+  if(!cv) return;
+  // Forzar dimensiones antes de crear el chart
+  const wrap = cv.parentElement;
+  if(wrap) { wrap.style.height='220px'; wrap.style.minHeight='220px'; }
+  cv.style.height='220px';
+  if(window._chart) { window._chart.destroy(); window._chart=null; }
+  if(!dates.length){
+    window._chart=new Chart(cv,{type:'line',data:{labels:['Sin datos'],datasets:[{label:'',data:[0],borderColor:'#e2e6f0'}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a6478'}},y:{ticks:{color:'#5a6478'}}}}});
+    return;
+  }
+  window._chart=new Chart(cv,{type:'line',
+    data:{labels:dates,datasets:deps.map(d=>({label:ln[d],data:dates.map(dt=>dm[dt]?.[d]||0),borderColor:DEP_COLOR[d],backgroundColor:DEP_COLOR[d]+'22',borderWidth:2,pointRadius:3,pointBackgroundColor:DEP_COLOR[d],tension:.3,fill:false}))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#3a3f52',font:{family:'Barlow Condensed',size:12},boxWidth:12,padding:16}}},
+      scales:{x:{ticks:{color:'#5a6478',font:{family:'Share Tech Mono',size:10}},grid:{color:'#e8ecf4'}},
+              y:{ticks:{color:'#5a6478',font:{family:'Share Tech Mono',size:10}},grid:{color:'#e8ecf4'},beginAtZero:true,precision:0}}}});
+  // Forzar resize para que tome las dimensiones correctas
+  setTimeout(()=>{ if(window._chart) window._chart.resize(); }, 100);
 }
 
 let evoTab='semana', evoDep='TODOS', _evoChart=null;
