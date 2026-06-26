@@ -790,7 +790,7 @@ function outsideClose(e){if(e.target===document.getElementById('modal-overlay'))
 function setTab(t){activeTab=t;['ayer','semana','mes','todo'].forEach(x=>{const el=document.getElementById('tab-'+x);if(el)el.className='tab-btn'+((t===x||(t==='mes-pick'&&x==='mes'))?' active':'');});renderModal();}
 function getMesPick(pickerId){const sel=document.getElementById(pickerId);return sel?sel.value:'';}
 
-function populateMonthPicker(pickerId,recs){const sel=document.getElementById(pickerId);if(!sel)return;const meses=[...new Set(recs.map(r=>r.fecha?r.fecha.slice(0,7):'')).filter(Boolean)].filter(Boolean).sort().reverse();const cur=sel.value;sel.innerHTML='<option value="">— Mes —</option>'+meses.map(m=>{const[y,mo]=m.split('-');const label=new Date(parseInt(y),parseInt(mo)-1,15).toLocaleString('es-AR',{month:'short',year:'2-digit'}).toUpperCase();return`<option value="${m}" ${m===cur?'selected':''}>${label}</option>`;}).join('');}
+function populateMonthPicker(pickerId,recs){const sel=document.getElementById(pickerId);if(!sel)return;const meses=[...new Set(recs.map(r=>r.fecha?r.fecha.slice(0,7):''))].filter(Boolean).sort().reverse();const cur=sel.value;sel.innerHTML='<option value="">— Mes —</option>'+meses.map(m=>{const[y,mo]=m.split('-');const label=new Date(parseInt(y),parseInt(mo)-1,15).toLocaleString('es-AR',{month:'short',year:'2-digit'}).toUpperCase();return`<option value="${m}" ${m===cur?'selected':''}>${label}</option>`;}).join('');}
 
 function renderModal(){
   if(!modalDep)return;
