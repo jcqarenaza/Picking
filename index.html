@@ -424,7 +424,20 @@ const _yd = new Date(); _yd.setDate(_yd.getDate()-1);
 const yesterday = _yd.toISOString().split('T')[0];
 const _td = document.getElementById('today-date'); if(_td) _td.textContent = today;
 
-if (SHEET_URL) { setSyncStatus('loading','Cargando...'); fetchFromSheet(); startPolling(); }
+if (SHEET_URL) {
+  setSyncStatus('loading','Cargando...');
+  // FASE 1: últimos 7 días — rápido, muestra datos de hoy al instante
+  apiCall({action:'getRecent'}).then(data => {
+    if (data.records && data.records.length) {
+      records = data.records.map(normalizeRecord);
+      lastServerTs = data.ts;
+      renderAll();
+      setSyncStatus('ok','Vista rápida — cargando histórico...');
+    }
+    // FASE 2: 60 días completos en background
+    setTimeout(() => { fetchFromSheet(); startPolling(); }, 1200);
+  }).catch(() => { fetchFromSheet(); startPolling(); });
+}
 else { setSyncStatus('err','Sin URL configurada'); }
 // Re-render stats after a short delay to ensure canvas has proper dimensions
 setTimeout(() => { renderEficiencia(); if (records.length) { renderStats(); renderRanking(); renderUserRanking(); } }, 800);
@@ -458,14 +471,13 @@ async function apiCall(params) {
   return data;
 }
 
-async function fetchFromSheet() {
+async function fetchFromSheet(force=false) {
   if (isSyncing || !SHEET_URL || pendingSave) return;
-  // No sincronizar si hay un inline edit abierto — evita resetear el formulario
   if (document.querySelector('.inline-edit.open')) return;
   isSyncing = true;
   try {
     const data = await apiCall({ action:'get' });
-    if (data.ts && data.ts > lastServerTs) {
+    if (force || (data.ts && data.ts > lastServerTs)) {
       setSyncStatus('loading','Sincronizando...');
       lastServerTs = data.ts;
       const incoming = (data.records || []).map(normalizeRecord);
