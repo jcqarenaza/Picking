@@ -287,7 +287,8 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--te
       <span>Arrastrá el Excel acá o hacé click para elegir</span>
     </div>
     <div class="import-status" id="import-status">Esperando archivo...</div>
-    <button class="btn-export" style="background:#2B6CB0;" onclick="openStatsModal()">📊 ESTADÍSTICAS</button>
+    <button class="btn-small secondary" onclick="archiveOldData()" title="Mover registros de más de 90 días a hoja Archivo" style="margin-left:auto;">📦 Archivar</button>
+    <button class="btn-export" style="background:#2B6CB0;margin-left:8px;" onclick="openStatsModal()">📊 ESTADÍSTICAS</button>
     <button class="btn-export" style="background:#4a5568;margin-left:8px;" onclick="document.getElementById('manual-overlay').style.display='block'">📖 MANUAL</button>
   </div>
 
@@ -668,9 +669,22 @@ function handleFile(file) {
 
       status.textContent = `Subiendo ${batch.length} registros...`;
       if (SHEET_URL) {
-        const res = await apiCall({ action:'upsertBatch', records:batch });
-        status.className='import-status ok';
-        const msg = `✅ ${res.added||0} nuevos, ${res.updated||0} actualizados — ${file.name}`;
+        // Enviar en lotes de 50 para evitar respuestas grandes que Google redirige
+        const CHUNK = 50;
+        let totalAdded = 0, totalUpdated = 0;
+        for (let i = 0; i < batch.length; i += CHUNK) {
+          const chunk = batch.slice(i, i + CHUNK);
+          status.textContent = `Subiendo ${Math.min(i+CHUNK, batch.length)}/${batch.length}...`;
+          try {
+            const res = await apiCall({ action:'upsertBatch', records:chunk });
+            totalAdded   += res.added   || 0;
+            totalUpdated += res.updated || 0;
+          } catch(chunkErr) {
+            console.warn('Chunk error (datos guardados igual):', chunkErr.message);
+          }
+        }
+        status.className = 'import-status ok';
+        const msg = `✅ ${totalAdded} nuevos, ${totalUpdated} actualizados — ${file.name}`;
         status.textContent = msg;
         toast(msg);
         pollNow();
@@ -1564,6 +1578,26 @@ function ieChangeCat(id) {
   wrap.style.display=subs.length?'block':'none';
 }
 
+async function archiveOldData() {
+  if (!SHEET_URL) { toast('Sin conexión al Sheet', true); return; }
+  if (!confirm('¿Mover registros de más de 90 días a la hoja Archivo? Los datos quedan guardados ahí.')) return;
+  const status = document.getElementById('import-status');
+  status.textContent = '📦 Archivando...';
+  try {
+    const res = await apiCall({ action:'archiveOld', days:90 });
+    const msg = `✅ ${res.archived} registros archivados, ${res.kept} activos`;
+    status.className = 'import-status ok';
+    status.textContent = msg;
+    toast(msg);
+    lastServerTs = 0;
+    fetchFromSheet();
+  } catch(e) {
+    status.className = 'import-status err';
+    status.textContent = '❌ Error: ' + e.message;
+    toast('❌ Error al archivar', true);
+  }
+}
+
 async function saveMotivo(id) {
   const cat=(document.getElementById('ie-cat-'+id)||{}).value||'';
   const sub=(document.getElementById('ie-sub-'+id)||{}).value||'';
@@ -2068,7 +2102,7 @@ async function importEficiencia(wb, fecha, sheetName) {
   } catch(e) { toast('❌ importEficiencia: ' + e.message, true); }
 }
 
-async function fetchEficiencia() {
+async function fetchEficiencia(retries=2) {
   if (!SHEET_URL) return;
   try {
     const data = await apiCall({action:'getEficiencia'});
@@ -2082,10 +2116,8 @@ async function fetchEficiencia() {
         uds: parseInt(r.uds)||0,
         tiempo: sheetTimeToMinutes(r.tiempo),
         fecha: String(r.fecha||'').split('T')[0],
-        // Normalizar dep (Sheet puede tener BA, ROS, etc.)
         dep: DEP_MAP[String(r.dep||'').trim().toUpperCase()] || String(r.dep||'').trim()
       }));
-      // Merge con seed local — Sheet tiene prioridad pero no borra seed si Sheet vacío
       if (incoming.length > 0) {
         incoming.forEach(r => {
           const key = r.fecha+'|'+r.user+'|'+r.dep;
@@ -2094,9 +2126,18 @@ async function fetchEficiencia() {
         });
       }
       renderEficiencia();
-      renderDepCards(); // actualizar tarjetas con x1000 ahora que efRecords está listo
+      renderDepCards();
+      populateMonthPicker('ef-mes-picker', efRecords);
+      populateMonthPicker('modal-mes-picker', records);
     }
-  } catch(e) { console.error('fetchEficiencia:', e); }
+  } catch(e) {
+    if (retries > 0) {
+      // Retry tras 3 segundos para errores transitorios de red
+      setTimeout(() => fetchEficiencia(retries-1), 3000);
+    } else {
+      console.error('fetchEficiencia:', e);
+    }
+  }
 }
 
 function renderEficiencia() {
