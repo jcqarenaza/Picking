@@ -1584,7 +1584,7 @@ async function archiveOldData() {
   const status = document.getElementById('import-status');
   status.textContent = '📦 Archivando...';
   try {
-    const res = await apiCall({ action:'archiveOld', days:90 });
+    const res = await apiCall({ action:'archiveOld', days:30 });
     const msg = `✅ ${res.archived} registros archivados, ${res.kept} activos`;
     status.className = 'import-status ok';
     status.textContent = msg;
