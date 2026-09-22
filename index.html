@@ -473,10 +473,11 @@ function setSyncStatus(state, label) {
 
 async function apiCall(params) {
   if (!SHEET_URL) throw new Error('URL no configurada');
-  const isGet = !params.action || params.action === 'get' || params.action === 'getEficiencia' || params.action === 'ping';
+  const isGet = ['get','getRecent','getPage','getEficiencia','ping'].includes(params.action);
   let url, opts;
   if (isGet) {
-    url = SHEET_URL + '?action=' + (params.action||'get') + '&ts=' + Date.now();
+    const qs = Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+    url = SHEET_URL + '?' + qs + '&ts=' + Date.now();
     opts = { method:'GET', redirect:'follow' };
   } else {
     url = SHEET_URL;
@@ -496,46 +497,51 @@ async function fetchFromSheet(force=false) {
   if (document.querySelector('.inline-edit.open')) return;
   isSyncing = true;
   try {
-    const data = await apiCall({ action:'get' });
-    if (force || (data.ts && data.ts > lastServerTs)) {
-      setSyncStatus('loading','Sincronizando...');
-      lastServerTs = data.ts;
-      const incoming = (data.records || []).map(normalizeRecord);
-      const localMap = {};
-      records.forEach(r => { localMap[String(r.id)] = r; });
-      records = incoming.map(remote => {
-        const local = localMap[String(remote.id)];
-        if (!local) return remote;
-        return {
-          ...remote,
-          observacion:  remote.observacion  || remote.motivoExtra || local.observacion || '',
-          motivoExtra:  remote.motivoExtra  || local.motivoExtra  || '',
-          cat:          remote.cat          || local.cat          || '',
-          sub:          remote.sub          || local.sub          || '',
-        };
-      });
-      // Actualizar contador y tarjetas de inmediato
-      const _tc = document.getElementById('total-count'); if(_tc) _tc.textContent = records.length;
-      renderDepCards();
-      populateMonthPicker('modal-mes-picker', records);
-      // Modal si está abierto — no re-renderizar si hay un inline edit activo
-      if (modalDep) {
-        const editOpen = document.querySelector('.inline-edit.open');
-        if (!editOpen) renderModal();
-      }
-      // Resto diferido para no bloquear el paint
-      if (_chartRenderTimer) clearTimeout(_chartRenderTimer);
-      _chartRenderTimer = setTimeout(() => {
-        renderChart();
-        renderRanking();
-        renderEvoChart();
-        renderUserRanking();
-        renderStats();
-        const logWrap = document.getElementById('log-body-wrap');
-        if (logWrap && logWrap.style.display !== 'none') renderLog();
-        _lastRenderHash = recordsHash();
-      }, 150);
+    // Chequear ts con request liviano (getRecent = 7 días)
+    const check = await apiCall({action:'getRecent'});
+    if (!force && check.ts && check.ts <= lastServerTs) {
+      setSyncStatus('ok', 'Sync ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+      isSyncing = false;
+      return;
     }
+    lastServerTs = check.ts;
+    setSyncStatus('loading','Sincronizando...');
+
+    // Bajar datos paginados de a 200 registros
+    let page = 0, allRecords = [], hasMore = true;
+    while (hasMore) {
+      const data = await apiCall({action:'getPage', page, size:200});
+      allRecords = allRecords.concat((data.records||[]).map(normalizeRecord));
+      hasMore = data.hasMore;
+      page++;
+    }
+
+    // Merge preservando etiquetas locales
+    const localMap = {};
+    records.forEach(r => { localMap[String(r.id)] = r; });
+    records = allRecords.map(remote => {
+      const local = localMap[String(remote.id)];
+      if (!local) return remote;
+      return { ...remote,
+        observacion: remote.observacion || remote.motivoExtra || local.observacion || '',
+        motivoExtra: remote.motivoExtra || local.motivoExtra || '',
+        cat:         remote.cat         || local.cat         || '',
+        sub:         remote.sub         || local.sub         || '',
+      };
+    });
+
+    const _tc = document.getElementById('total-count'); if(_tc) _tc.textContent = records.length;
+    renderDepCards();
+    populateMonthPicker('modal-mes-picker', records);
+    if (modalDep && !document.querySelector('.inline-edit.open')) renderModal();
+    if (_chartRenderTimer) clearTimeout(_chartRenderTimer);
+    _chartRenderTimer = setTimeout(() => {
+      renderChart(); renderRanking(); renderEvoChart(); renderUserRanking(); renderStats();
+      const logWrap = document.getElementById('log-body-wrap');
+      if (logWrap && logWrap.style.display !== 'none') renderLog();
+      _lastRenderHash = recordsHash();
+    }, 150);
+
     const now = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     setSyncStatus('ok','Sync ' + now);
   } catch(e) {
