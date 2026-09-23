@@ -465,7 +465,7 @@ function setSyncStatus(state, label) {
 
 async function apiCall(params) {
   if (!SHEET_URL) throw new Error('URL no configurada');
-  const isGet = ['get','getRecent','getPage','getEficiencia','ping'].includes(params.action);
+  const isGet = ['get','getRecent','getPage','getEficiencia','getEfPage','ping'].includes(params.action);
   let url, opts;
   if (isGet) {
     const qs = Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
@@ -490,7 +490,7 @@ async function fetchFromSheet(force=false) {
   isSyncing = true;
   try {
     // getPage(0) sirve de check de ts + primera página (respuesta chica, nunca redirige)
-    const first = await apiCall({action:'getPage', page:0, size:200});
+    const first = await apiCall({action:'getPage', page:0, size:100});
     if (!force && first.ts && first.ts <= lastServerTs) {
       setSyncStatus('ok', 'Sync ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
       isSyncing = false;
@@ -503,7 +503,7 @@ async function fetchFromSheet(force=false) {
     let allRecords = (first.records||[]).map(normalizeRecord);
     let hasMore = first.hasMore, page = 1;
     while (hasMore) {
-      const data = await apiCall({action:'getPage', page, size:200});
+      const data = await apiCall({action:'getPage', page, size:100});
       allRecords = allRecords.concat((data.records||[]).map(normalizeRecord));
       hasMore = data.hasMore;
       page++;
@@ -2104,9 +2104,16 @@ async function importEficiencia(wb, fecha, sheetName) {
 async function fetchEficiencia(retries=2) {
   if (!SHEET_URL) return;
   try {
-    const data = await apiCall({action:'getEficiencia'});
-    if (data.records && data.records.length) {
-      const incoming = data.records.map(r=>({...r,
+    // Bajar eficiencia paginada de a 100 (respuestas chicas, sin redirect)
+    let page = 0, all = [], hasMore = true;
+    while (hasMore) {
+      const data = await apiCall({action:'getEfPage', page, size:100});
+      all = all.concat(data.records||[]);
+      hasMore = data.hasMore;
+      page++;
+    }
+    if (all.length) {
+      const incoming = all.map(r=>({...r,
         usp: parseInt(r.usp)||0,
         promCod: sheetTimeToMinutes(r.promCod),
         promPed: sheetTimeToMinutes(r.promPed),
