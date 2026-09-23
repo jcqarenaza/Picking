@@ -446,17 +446,9 @@ const _td = document.getElementById('today-date'); if(_td) _td.textContent = tod
 
 if (SHEET_URL) {
   setSyncStatus('loading','Cargando...');
-  // FASE 1: últimos 7 días — rápido, muestra datos de hoy al instante
-  apiCall({action:'getRecent'}).then(data => {
-    if (data.records && data.records.length) {
-      records = data.records.map(normalizeRecord);
-      lastServerTs = data.ts;
-      renderAll();
-      setSyncStatus('ok','Vista rápida — cargando histórico...');
-    }
-    // FASE 2: 60 días completos en background
-    setTimeout(() => { fetchFromSheet(); startPolling(); }, 1200);
-  }).catch(() => { fetchFromSheet(); startPolling(); });
+  // Carga paginada directa (getPage nunca redirige) + polling
+  fetchFromSheet(true);
+  startPolling();
 }
 else { setSyncStatus('err','Sin URL configurada'); }
 // Re-render stats after a short delay to ensure canvas has proper dimensions
@@ -497,18 +489,19 @@ async function fetchFromSheet(force=false) {
   if (document.querySelector('.inline-edit.open')) return;
   isSyncing = true;
   try {
-    // Chequear ts con request liviano (getRecent = 7 días)
-    const check = await apiCall({action:'getRecent'});
-    if (!force && check.ts && check.ts <= lastServerTs) {
+    // getPage(0) sirve de check de ts + primera página (respuesta chica, nunca redirige)
+    const first = await apiCall({action:'getPage', page:0, size:200});
+    if (!force && first.ts && first.ts <= lastServerTs) {
       setSyncStatus('ok', 'Sync ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
       isSyncing = false;
       return;
     }
-    lastServerTs = check.ts;
+    lastServerTs = first.ts;
     setSyncStatus('loading','Sincronizando...');
 
-    // Bajar datos paginados de a 200 registros
-    let page = 0, allRecords = [], hasMore = true;
+    // Primera página ya la tenemos; bajar el resto
+    let allRecords = (first.records||[]).map(normalizeRecord);
+    let hasMore = first.hasMore, page = 1;
     while (hasMore) {
       const data = await apiCall({action:'getPage', page, size:200});
       allRecords = allRecords.concat((data.records||[]).map(normalizeRecord));
