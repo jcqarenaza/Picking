@@ -325,21 +325,6 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--te
     </div>
   </div>
 
-  <!-- LOG (colapsable) -->
-  <div class="panel">
-    <div class="panel-head" onclick="toggleLog()" style="cursor:pointer;user-select:none;">
-      <h2>📋 Registro completo <span id="log-toggle-icon" style="font-size:.65rem;color:var(--accent);margin-left:8px;letter-spacing:1px;font-weight:700;">▶ MOSTRAR</span></h2>
-      <span class="total-badge" id="log-count">0 registros</span>
-    </div>
-    <div id="log-body-wrap" style="display:none;">
-      <div class="scroll-body">
-        <table class="log-table">
-          <thead><tr><th>Fecha</th><th>SKU</th><th>Stock</th><th>Depósito</th><th>Origen</th><th>Usuario</th><th>Motivo</th><th>Observación</th></tr></thead>
-          <tbody id="log-tbody"><tr><td colspan="9" class="empty-msg">Sin registros todavía</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
     </div>
   </div>
 
@@ -2389,121 +2374,143 @@ function toggleLog() {
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 </script>
 
-<div id="manual-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:9999;overflow-y:auto;">
-  <div style="max-width:860px;margin:40px auto 60px;background:#fff;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.25);font-family:'Barlow Condensed',Arial,sans-serif;">
-    <div style="background:linear-gradient(135deg,#2B6CB0,#1a4a8a);padding:32px 40px 24px;border-radius:8px 8px 0 0;position:relative;">
-      <button onclick="document.getElementById('manual-overlay').style.display='none'" style="position:absolute;top:16px;right:20px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.4rem;cursor:pointer;width:36px;height:36px;border-radius:50%;">✕</button>
-      <div style="font-size:2.2rem;font-weight:900;color:#fff;letter-spacing:2px;">PICKS EN 0</div>
-      <div style="font-size:1rem;color:rgba(255,255,255,.75);margin-top:4px;">Manual de Usuario · Gerencia Operativa · Marzo 2026</div>
+<div id="manual-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,20,50,.5);z-index:9999;overflow-y:auto;">
+  <div style="max-width:860px;margin:40px auto 60px;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(10,20,50,.2);font-family:'Barlow Condensed',Arial,sans-serif;">
+    <div style="background:#eef4ff;padding:32px 40px 24px;border-radius:16px 16px 0 0;position:relative;border-bottom:1px solid #d0d9ec;">
+      <button onclick="document.getElementById('manual-overlay').style.display='none'" style="position:absolute;top:16px;right:20px;background:#fff;border:1px solid #d0d9ec;color:#6b7a94;font-size:1.2rem;cursor:pointer;width:36px;height:36px;border-radius:50%;">✕</button>
+      <div style="font-size:2.2rem;font-weight:900;color:#1a3c78;letter-spacing:2px;">PICKS EN <span style="color:#d4891a;">0</span></div>
+      <div style="font-size:1rem;color:#6b7a94;margin-top:4px;">Manual de Usuario · Gerencia Operativa · Septiembre 2026</div>
     </div>
-    <div style="padding:32px 40px 40px;line-height:1.7;color:#2D3748;font-size:.95rem;">
-      <div style="background:#EBF4FF;border-left:4px solid #2B6CB0;padding:16px 20px;border-radius:0 6px 6px 0;margin-bottom:28px;">
-        <div style="font-weight:700;color:#2B6CB0;margin-bottom:8px;">Contenido</div>
+    <div style="padding:32px 40px 40px;line-height:1.7;color:#1a2233;font-size:.95rem;">
+      <div style="background:#eef4ff;padding:16px 20px;border-radius:12px;margin-bottom:28px;">
+        <div style="font-weight:700;color:#1a3c78;margin-bottom:8px;">Contenido</div>
         <div style="columns:2;gap:24px;font-size:.88rem;">
-          <a href="#m1" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">1. ¿Qué es Picks en 0?</a>
-          <a href="#m2" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">2. Acceso e Inicio de Sesión</a>
-          <a href="#m3" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">3. Panel Principal</a>
-          <a href="#m4" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">4. Importar Excel Diario</a>
-          <a href="#m5" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">5. Etiquetado de Motivos</a>
-          <a href="#m6" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">6. Modal de Detalle</a>
-          <a href="#m7" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">7. Exportar a Excel</a>
-          <a href="#m8" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">8. Sincronización</a>
-          <a href="#m9" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">9. Métricas</a>
-          <a href="#m10" style="display:block;color:#2B6CB0;text-decoration:none;padding:2px 0;">10. Glosario</a>
+          <a href="#m1" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">1. ¿Qué es Picks en 0?</a>
+          <a href="#m2" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">2. Acceso</a>
+          <a href="#m3" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">3. Tarjetas de Depósito</a>
+          <a href="#m4" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">4. Filtros de Período</a>
+          <a href="#m5" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">5. Importar Excel</a>
+          <a href="#m6" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">6. Etiquetado de Motivos</a>
+          <a href="#m7" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">7. Eficiencia de Pickeo</a>
+          <a href="#m8" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">8. Exportar y Archivar</a>
+          <a href="#m9" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">9. Sincronización</a>
+          <a href="#m10" style="display:block;color:#1a3c78;text-decoration:none;padding:2px 0;">10. Glosario</a>
         </div>
       </div>
 
-      <h2 id="m1" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">1. ¿Qué es Picks en 0?</h2>
-      <p>Herramienta de seguimiento y análisis de artículos sin pickear, con visibilidad en tiempo real sobre los productos que no pudieron ser despachados en cada depósito.</p>
-      <div style="background:#EBF4FF;border-left:4px solid #2B6CB0;padding:12px 16px;border-radius:0 6px 6px 0;margin:16px 0;">
-        <b style="color:#2B6CB0;">Objetivo principal</b><br>
+      <h2 id="m1" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">1. ¿Qué es Picks en 0?</h2>
+      <p>Herramienta de seguimiento y análisis de artículos sin pickear, con visibilidad en tiempo real sobre los productos que no pudieron ser despachados en cada depósito, más las métricas de eficiencia de pickeo por operador.</p>
+      <div style="background:#eef4ff;padding:12px 16px;border-radius:12px;margin:16px 0;">
+        <b style="color:#1a3c78;">Objetivo principal</b><br>
         • Reducir artículos sin pickear identificando causas de forma sistemática.<br>
-        • Proveer métricas por depósito, categoría y período para la toma de decisiones.<br>
+        • Medir la eficiencia de pickeo (picks × 1000, tiempos promedio) por depósito y operador.<br>
         • Reemplazar el seguimiento manual por un sistema centralizado y colaborativo.
       </div>
       <p><b>Usuarios:</b> Operadores (etiquetan motivos) · Supervisores (monitorean) · Gerencia (analiza tendencias).</p>
 
-      <h2 id="m2" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">2. Acceso e Inicio de Sesión</h2>
-      <p>Archivo HTML que se abre directamente en el navegador. Sin instalación.</p>
-      <ol style="padding-left:20px;"><li>Abrir <b>picks_dashboard.html</b> en Chrome.</li><li>Ingresar nombre de usuario (ej: <b>alex.k</b>) y click en <b>ENTRAR</b>.</li><li>La app sincroniza con Google Sheets automáticamente.</li></ol>
-      <div style="background:#FFF5F5;border-left:4px solid #E53E3E;padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:.9rem;">El nombre queda guardado. Para cambiarlo, click en <b>[cambiar]</b> en el encabezado.</div>
+      <h2 id="m2" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">2. Acceso</h2>
+      <p>El sistema corre en la web, sin instalación:</p>
+      <ol style="padding-left:20px;"><li>Abrir la dirección del sistema en Chrome (GitHub Pages).</li><li>Ingresar nombre de usuario (ej: <b>alex.k</b>) y click en <b>ENTRAR</b>.</li><li>La app sincroniza con Google Sheets automáticamente.</li></ol>
+      <div style="background:#fff8e6;padding:10px 14px;border-radius:12px;margin:12px 0;font-size:.9rem;color:#854F0B;">El nombre queda guardado en el dispositivo. Para cambiarlo, click en <b>[cambiar]</b> en el encabezado.</div>
 
-      <h2 id="m3" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">3. Panel Principal</h2>
+      <h2 id="m3" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">3. Tarjetas de Depósito</h2>
       <table style="width:100%;border-collapse:collapse;font-size:.88rem;margin:10px 0 16px;">
-        <tr style="background:#2B6CB0;color:#fff;"><th style="padding:7px 10px;text-align:left;">Depósito</th><th style="padding:7px 10px;text-align:left;">Código</th><th style="padding:7px 10px;text-align:left;">Color</th></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">📍 Pico</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">PICO</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Rojo</td></tr>
-        <tr style="background:#F7FAFC;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">🌊 Mar del Plata</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">MDP</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Violeta</td></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">🏙️ Buenos Aires</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">BSAS / BA</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Naranja</td></tr>
-        <tr style="background:#F7FAFC;"><td style="padding:6px 10px;">🌹 Rosario</td><td style="padding:6px 10px;">ROSARIO</td><td style="padding:6px 10px;">Azul</td></tr>
+        <tr style="background:#eef4ff;color:#1a3c78;"><th style="padding:7px 10px;text-align:left;">Depósito</th><th style="padding:7px 10px;text-align:left;">Código</th><th style="padding:7px 10px;text-align:left;">Color</th></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">📍 Pico</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">PICO</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Coral</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">🌊 Mar del Plata</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">MDP</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Lavanda</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">🏙️ Buenos Aires</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">BSAS / BA</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Ámbar</td></tr>
+        <tr><td style="padding:6px 10px;">🌹 Rosario</td><td style="padding:6px 10px;">ROSARIO</td><td style="padding:6px 10px;">Celeste</td></tr>
       </table>
-      <p>Cada tarjeta muestra <b>Totales</b> (acumulado histórico) y <b>Últ. Día</b> (último día con datos cargados, con su fecha), más desglose por categoría de motivo.</p>
-      <p>Al lado del nombre de cada depósito hay un punto de color según el último día cargado: <span style="color:#68D391;font-weight:700;">● Verde</span> = 0 picks en 0 · <span style="color:#F6E05E;font-weight:700;">● Amarillo</span> = 1 a 5 · <span style="color:#E53E3E;font-weight:700;">● Rojo</span> = 6 o más.</p>
-
-      <h2 id="m4" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">4. Importar Excel Diario</h2>
-      <ol style="padding-left:20px;">
-        <li>Descargar el Excel del día (ej: <b>Articulos_Sin_Pickear_ALL_2026-03-05.xlsx</b>).</li>
-        <li>Arrastrarlo sobre el área punteada o hacer click para seleccionarlo.</li>
-        <li>La app confirma: <b>✅ X nuevos, Y actualizados</b>.</li>
-      </ol>
-      <div style="background:#EBF4FF;border-left:4px solid #2B6CB0;padding:12px 16px;border-radius:0 6px 6px 0;margin:14px 0;font-size:.9rem;">
-        <b style="color:#2B6CB0;">Al reimportar</b>: solo se actualizan stock y unidades. Los motivos y observaciones cargados <b>no se pierden</b>.
+      <p>Cada tarjeta muestra:</p>
+      <ul style="padding-left:20px;">
+        <li><b>Mes Actual</b>: códigos y unidades del mes calendario, con % de variación vs el mes anterior.</li>
+        <li><b>Últ. Día</b>: último día con datos cargados (el sistema trabaja a día vencido).</li>
+        <li><b>Esta semana vs anterior</b>: códigos y unidades de lunes a sábado, con variación.</li>
+        <li><b>Categorías</b>: desglose por motivo etiquetado.</li>
+      </ul>
+      <p>El estado aparece como una etiqueta al lado del nombre: <span style="background:#f0fdf4;color:#16a34a;padding:2px 10px;border-radius:99px;font-weight:700;font-size:.8rem;">ok</span> = sin unidades en 0 el último día · <span style="background:#fff8e6;color:#d97706;padding:2px 10px;border-radius:99px;font-weight:700;font-size:.8rem;">N en 0</span> = 1 a 5 · <span style="background:#fef2f2;color:#dc2626;padding:2px 10px;border-radius:99px;font-weight:700;font-size:.8rem;">N en 0</span> = 6 o más.</p>
+      <div style="background:#eef4ff;padding:12px 16px;border-radius:12px;margin:14px 0;font-size:.9rem;">
+        <b style="color:#1a3c78;">Doble click</b><br>
+        • Doble click en la <b>tarjeta</b> → despliega los <b>PICKS × 1000</b> del depósito (último día, semana con comparativo vs anterior, y mes).<br>
+        • Doble click en <b>CATEGORÍAS</b> → expande el desglose de los 4 depósitos a la vez.
       </div>
-      <p><b>Cálculo de unidades faltantes:</b> <code style="background:#EDF2F7;padding:2px 6px;border-radius:3px;">min(Cantidad − Pickeado, Stock)</code> — no puede superar el stock disponible.</p>
 
-      <h2 id="m5" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">5. Etiquetado de Motivos</h2>
+      <h2 id="m4" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">4. Filtros de Período</h2>
+      <p>Los mismos filtros aplican al modal de depósito y al panel de eficiencia:</p>
+      <ul style="padding-left:20px;">
+        <li><b>AYER</b>: último día con datos cargados, excluyendo hoy (día vencido).</li>
+        <li><b>SEMANA</b>: lunes a sábado de la semana actual.</li>
+        <li><b>MES</b>: mes calendario en curso, del 1° al último día.</li>
+        <li><b>Selector de mes</b>: dropdown para consultar cualquier mes histórico disponible.</li>
+        <li><b>TODOS</b> (solo modal): todos los registros disponibles.</li>
+      </ul>
+
+      <h2 id="m5" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">5. Importar Excel</h2>
+      <ol style="padding-left:20px;">
+        <li>Descargar el Excel del día (ej: <b>Articulos_Sin_Pickear_ALL_2026-09-22.xlsx</b>).</li>
+        <li>Arrastrarlo sobre el área punteada o hacer click para seleccionarlo.</li>
+        <li>La app sube los datos en lotes y confirma: <b>✅ X nuevos, Y actualizados</b>.</li>
+        <li>Si el Excel trae hoja <b>datos</b>, también se carga la eficiencia de pickeo del día.</li>
+      </ol>
+      <div style="background:#eef4ff;padding:12px 16px;border-radius:12px;margin:14px 0;font-size:.9rem;">
+        <b style="color:#1a3c78;">Al reimportar</b>: solo se actualizan stock y unidades. Los motivos y observaciones cargados <b>no se pierden</b>.
+      </div>
+      <p><b>Cálculo de unidades faltantes:</b> <code style="background:#f3f6fb;padding:2px 6px;border-radius:6px;">min(Cantidad − Pickeado, Stock)</code> — no puede superar el stock disponible.</p>
+
+      <h2 id="m6" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">6. Etiquetado de Motivos</h2>
       <ol style="padding-left:20px;">
         <li>Click en la tarjeta del depósito → abrir detalle.</li>
         <li>Localizar el artículo (buscar por SKU).</li>
         <li>Click en <b>Etiquetar</b> o <b>Editar</b>.</li>
         <li>Seleccionar Categoría y Subcategoría.</li>
         <li>Agregar Observación (opcional).</li>
-        <li>Click en <b>✅ Guardar</b>. Se sincroniza al instante.</li>
+        <li>Click en <b>Guardar</b>. Se sincroniza al instante.</li>
       </ol>
       <table style="width:100%;border-collapse:collapse;font-size:.88rem;margin:10px 0;">
-        <tr style="background:#2B6CB0;color:#fff;"><th style="padding:7px 10px;text-align:left;">Categoría</th><th style="padding:7px 10px;text-align:left;">Subcategorías</th></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;color:#E53E3E;font-weight:700;">🏭 Depo</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Mal Guardado, Pickeado para otro cliente</td></tr>
-        <tr style="background:#F7FAFC;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;color:#DD6B20;font-weight:700;">🔍 No encontrado</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">(sin subcategoría)</td></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;color:#D69E2E;font-weight:700;">📋 Admin</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Demora en Ajuste, Error de Ajuste, Falta RMA, Error de Factura</td></tr>
-        <tr style="background:#F7FAFC;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;color:#3182CE;font-weight:700;">💻 Sistemas</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Demora en Stock, Error de Sincronización, Falta Factura</td></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;color:#805AD5;font-weight:700;">🛒 Compras</td><td style="padding:6px 10px;">Cambio de Código, Código no cargado</td></tr>
+        <tr style="background:#eef4ff;color:#1a3c78;"><th style="padding:7px 10px;text-align:left;">Categoría</th><th style="padding:7px 10px;text-align:left;">Subcategorías</th></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;color:#993C1D;font-weight:700;">🏭 Depo</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Mal Guardado, Pickeado para otro cliente</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;color:#854F0B;font-weight:700;">🔍 No encontrado</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">(sin subcategoría)</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;color:#d97706;font-weight:700;">📋 Admin</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Demora en Ajuste, Error de Ajuste, Falta RMA, Error de Factura</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;color:#185FA5;font-weight:700;">💻 Sistemas</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Demora en Stock, Error de Sincronización, Falta Factura</td></tr>
+        <tr><td style="padding:6px 10px;color:#534AB7;font-weight:700;">🛒 Compras</td><td style="padding:6px 10px;">Cambio de Código, Código no cargado</td></tr>
       </table>
+      <p>En el modal, los artículos <b>sin motivo aparecen siempre primero</b>. El pie muestra <b>MOSTRANDO: N</b> y <b>SIN MOTIVO: N</b> (en rojo si hay pendientes). En el header del modal aparece el pill <b>PICKS x1000 (ayer)</b> del depósito.</p>
 
-      <h2 id="m6" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">6. Modal de Detalle</h2>
-      <p>Filtros disponibles: <b>Ayer</b> · <b>Esta Semana</b> (7 días) · <b>Este Mes</b> (30 días) · <b>Todos</b>.</p>
-      <p>Los artículos <b>sin motivo aparecen siempre primero</b>. El pie muestra <b>MOSTRANDO: N</b> y <b>SIN MOTIVO: N</b> (en rojo si hay pendientes).</p>
-
-      <h2 id="m7" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">7. Exportar a Excel</h2>
-      <p>Click en <b>📊 EXPORTAR EXCEL</b>. Descarga todas las columnas: Fecha, SKU, Unidades, Depósito, Categoría, Subcategoría, Observación, Usuario y Cliente.</p>
-
-      <h2 id="m8" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">8. Sincronización con Google Sheets</h2>
+      <h2 id="m7" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">7. Eficiencia de Pickeo</h2>
+      <p>Panel con las métricas de la app de picking, importadas desde la hoja <b>datos</b> del Excel:</p>
       <ul style="padding-left:20px;">
-        <li><b>Lectura automática</b> cada 8 segundos si hubo cambios.</li>
+        <li><b>PICKS × 1000</b>: unidades sin pickear cada 1000 pickeadas. <b>Menor = mejor</b>. Verde = 0 · Amarillo ≤ 5 · Rojo &gt; 5.</li>
+        <li><b>Prom. × Ped</b>: tiempo promedio por pedido, ponderado por unidades.</li>
+        <li><b>Unidades</b>: total de unidades pickeadas del período.</li>
+      </ul>
+      <p>Se muestra el <b>General</b> más los 4 depósitos. <b>Doble click en un depósito</b> despliega el detalle por usuario (ahí también aparece Prom. × Cód).</p>
+
+      <h2 id="m8" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">8. Exportar y Archivar</h2>
+      <p><b>⬇ EXPORTAR</b>: descarga un Excel con todas las columnas: Fecha, SKU, Unidades, Depósito, Categoría, Subcategoría, Observación, Usuario y Cliente.</p>
+      <p><b>📦 Archivar</b>: mueve los registros de más de 30 días a la hoja <b>Archivo</b> del Google Sheet. Los datos no se pierden — quedan consultables en el Sheet — y el sistema queda más rápido. Conviene ejecutarlo una vez por mes.</p>
+
+      <h2 id="m9" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">9. Sincronización</h2>
+      <ul style="padding-left:20px;">
+        <li><b>Lectura automática</b> cada 8 segundos si hubo cambios (descarga paginada, últimos 30 días).</li>
         <li><b>Escritura inmediata</b> al guardar motivos o importar Excel.</li>
-        <li><b>Multi-usuario</b>: varios operadores pueden trabajar en simultáneo.</li>
+        <li><b>Multi-usuario</b>: varios operadores pueden trabajar en simultáneo. La sincronización se pausa mientras hay un formulario de etiquetado abierto.</li>
         <li>Requiere conexión a internet.</li>
       </ul>
 
-      <h2 id="m9" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">9. Métricas e Indicadores</h2>
-      <ul style="padding-left:20px;">
-        <li><b>Gráfico de tendencia</b>: evolución diaria de picks en 0 por depósito.</li>
-        <li><b>Ranking de SKUs problemáticos</b>: top 5 artículos más recurrentes, filtrable por depósito.</li>
-        <li><b>Estadísticas por motivo</b>: distribución por categoría, categorías por depósito y detalle de subcategorías. Filtrable por Hoy · Semana · Todo.</li>
-        <li><b>Evolución de etiquetas</b>: líneas por categoría día a día, filtrable por período y depósito.</li>
-        <li><b>Ranking de usuarios</b>: suma de unidades de categorías Depo + No encontrado por operador. Doble click en el usuario despliega el desglose por categoría. Doble click en Depo muestra las subcategorías.</li>
-      </ul>
-
-      <h2 id="m10" style="font-size:1.25rem;font-weight:800;color:#2B6CB0;border-bottom:3px solid #2B6CB0;padding-bottom:6px;margin:28px 0 12px;">10. Glosario</h2>
+      <h2 id="m10" style="font-size:1.25rem;font-weight:800;color:#1a3c78;border-bottom:2px solid #d0d9ec;padding-bottom:6px;margin:28px 0 12px;">10. Glosario</h2>
       <table style="width:100%;border-collapse:collapse;font-size:.88rem;margin:10px 0;">
-        <tr style="background:#2B6CB0;color:#fff;"><th style="padding:7px 10px;text-align:left;">Término</th><th style="padding:7px 10px;text-align:left;">Definición</th></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-weight:700;">Pick en 0</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Artículo solicitado no despachado (unidades faltantes > 0).</td></tr>
-        <tr style="background:#F7FAFC;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-weight:700;">SKU</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Código identificador único de un artículo.</td></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-weight:700;">Etiquetar</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Asignar motivo y subcategoría a un artículo sin pickear.</td></tr>
-        <tr style="background:#F7FAFC;"><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-weight:700;">Sync</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;">Sincronización entre la app y Google Sheets.</td></tr>
-        <tr style="background:#fff;"><td style="padding:6px 10px;font-weight:700;">BSAS / BA</td><td style="padding:6px 10px;">Código del depósito de Buenos Aires.</td></tr>
+        <tr style="background:#eef4ff;color:#1a3c78;"><th style="padding:7px 10px;text-align:left;">Término</th><th style="padding:7px 10px;text-align:left;">Definición</th></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;font-weight:700;">Pick en 0</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Artículo solicitado no despachado (unidades faltantes &gt; 0).</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;font-weight:700;">Picks × 1000</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Unidades sin pickear por cada 1000 unidades pickeadas. Indicador de calidad — menor es mejor.</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;font-weight:700;">SKU</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Código identificador único de un artículo.</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;font-weight:700;">Etiquetar</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Asignar motivo y subcategoría a un artículo sin pickear.</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;font-weight:700;">Día vencido</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">El sistema analiza siempre el último día cargado, no el día en curso.</td></tr>
+        <tr><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;font-weight:700;">Sync</td><td style="padding:6px 10px;border-bottom:1px solid #d0d9ec;">Sincronización entre la app y Google Sheets.</td></tr>
+        <tr><td style="padding:6px 10px;font-weight:700;">BSAS / BA</td><td style="padding:6px 10px;">Código del depósito de Buenos Aires.</td></tr>
       </table>
 
-      <div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid #E2E8F0;color:#A0AEC0;font-size:.82rem;">
-        Picks en 0 · Gerencia Operativa · v5.0 · Abril 2026
+      <div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid #d0d9ec;color:#6b7a94;font-size:.82rem;">
+        Picks en 0 · Gerencia Operativa · v5 · Septiembre 2026
       </div>
     </div>
   </div>
