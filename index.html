@@ -412,6 +412,7 @@ let statsTab = 'todo';
 let rankDep = 'TODOS';
 let _pieChart = null, _barDepChart = null;
 let lastServerTs = 0, pollTimer = null, isSyncing = false, pendingSave = false;
+let _chartRenderTimer = null, _lastRenderHash = '';
 const POLL_INTERVAL = 8000;
 
 const DEP_COLOR  = {PICO:'#f07878',ROSARIO:'#7bb3f5',MDP:'#b39ddb',BSAS:'#f59e42'};
@@ -723,8 +724,6 @@ async function deleteRecord(id) {
 // ============================================================
 //  RENDER
 // ============================================================
-let _chartRenderTimer = null;
-let _lastRenderHash = '';
 
 function recordsHash() {
   // Hash rápido: cantidad + última fecha + último id — detecta cambios reales
