@@ -276,6 +276,7 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--te
     </div>
   </div>
 </header>
+<div id="stale-banner" style="display:none;background:var(--warn-lt);color:var(--warn);padding:8px 28px;font-family:'Share Tech Mono',monospace;font-size:.8rem;font-weight:700;border-bottom:1px solid var(--border);"></div>
 
 <!-- CONFIG BAR -->
 <div class="config-bar" id="config-bar">
@@ -548,6 +549,7 @@ async function fetchFromSheet(force=false) {
 
     const _tc = document.getElementById('total-count'); if(_tc) _tc.textContent = records.length;
     try { localStorage.setItem('picks_cache_records', JSON.stringify(records)); } catch(e) {}
+    checkStaleData();
     renderDepCards();
     populateMonthPicker('modal-mes-picker', records);
     if (modalDep && !document.querySelector('.inline-edit.open')) renderModal();
@@ -746,8 +748,25 @@ function recordsHash() {
   return records.length + '|' + (last.fecha||'') + '|' + (last.id||'');
 }
 
+function checkStaleData() {
+  const el = document.getElementById('stale-banner');
+  if (!el) return;
+  const fechas = [...new Set(records.map(r=>r.fecha))].filter(Boolean).sort();
+  const ult = fechas[fechas.length-1];
+  if (!ult) { el.style.display='none'; return; }
+  const diffDias = Math.floor((new Date(today+'T12:00:00') - new Date(ult+'T12:00:00')) / 86400000);
+  if (diffDias >= 2) {
+    const [y,m,d] = ult.split('-');
+    el.textContent = `⚠ Último dato cargado: ${d}/${m} — hace ${diffDias} días. Importá el Excel para actualizar.`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
 function renderAll() {
   const _tc = document.getElementById('total-count'); if(_tc) _tc.textContent = records.length;
+  checkStaleData();
 
   // FASE 1 — inmediata: lo que el usuario ve primero
   renderDepCards();
@@ -919,7 +938,9 @@ function renderDepCards() {
             const bg  = ok ? 'var(--ok-lt)' : warn ? 'var(--warn-lt)' : 'var(--alert-lt)';
             const fg  = ok ? 'var(--ok)'    : warn ? 'var(--warn)'    : 'var(--alert)';
             const txt = ok ? 'ok' : n + ' en 0';
-            return `<span class="dep-status-pill" style="background:${bg};color:${fg};">${txt}</span>`;
+            const sinEtiq = depRecs.filter(r=>!r.cat).length;
+            const badge = sinEtiq > 0 ? `<span class="dep-status-pill" style="margin-left:6px;background:var(--warn-lt);color:var(--warn);" title="Artículos sin motivo etiquetado">✏ ${sinEtiq}</span>` : '';
+            return `<span class="dep-status-pill" style="background:${bg};color:${fg};">${txt}</span>${badge}`;
           })()}
         </div>
         <div style="display:flex;gap:0;margin-bottom:6px;width:100%;">
@@ -1290,24 +1311,38 @@ function setRankDep(dep) {
 }
 
 function renderRanking() {
-  const base = rankDep==='TODOS' ? records : records.filter(r=>r.dep===rankDep);
-  const sm={};
-  base.forEach(r=>{ if(!sm[r.sku]) sm[r.sku]={count:0,deps:new Set()}; sm[r.sku].count++; sm[r.sku].deps.add(r.dep); });
-  const sorted=Object.entries(sm).sort((a,b)=>b[1].count-a[1].count).slice(0,20);
-  const max=sorted[0]?.[1].count||1;
-  const _rt=document.getElementById('rank-total'); if(_rt) _rt.textContent=Object.keys(sm).length+' SKUs únicos';
-  const el=document.getElementById('rank-list');
-  if(!el){return;}
-  if(!sorted.length){el.innerHTML='<div class="empty-msg">Sin datos aún</div>';return;}
-  el.innerHTML=sorted.map(([s,{count,deps}],i)=>{
-    const depDots = rankDep==='TODOS'
-      ? [...deps].map(d=>`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--dep-${d.toLowerCase()},#aaa);margin-left:2px;" title="${d}"></span>`).join('')
+  // Reincidentes del MES: SKUs que aparecen en más días distintos del mes actual
+  const mesInicio = today.slice(0,7) + '-01';
+  let base = records.filter(r => r.fecha >= mesInicio);
+  if (rankDep !== 'TODOS') base = base.filter(r => r.dep === rankDep);
+  const sm = {};
+  base.forEach(r => {
+    if (!sm[r.sku]) sm[r.sku] = { dias: new Set(), deps: new Set(), uds: 0 };
+    sm[r.sku].dias.add(r.fecha);
+    sm[r.sku].deps.add(r.dep);
+    sm[r.sku].uds += (parseInt(r.stock) || 0);
+  });
+  // Solo reincidentes reales: 2+ días distintos
+  const sorted = Object.entries(sm)
+    .map(([s, v]) => [s, { count: v.dias.size, deps: v.deps, uds: v.uds }])
+    .filter(([s, v]) => v.count >= 2)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 20);
+  const max = sorted[0]?.[1].count || 1;
+  const _rt = document.getElementById('rank-total');
+  if (_rt) _rt.textContent = sorted.length + ' reincidentes este mes';
+  const el = document.getElementById('rank-list');
+  if (!el) return;
+  if (!sorted.length) { el.innerHTML = '<div class="empty-msg">Sin SKUs reincidentes este mes 🎉</div>'; return; }
+  el.innerHTML = sorted.map(([s, {count, deps, uds}], i) => {
+    const depDots = rankDep === 'TODOS'
+      ? [...deps].map(d => `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--dep-${d.toLowerCase()},#aaa);margin-left:2px;" title="${d}"></span>`).join('')
       : '';
-    return `<div class="rank-item">
+    return `<div class="rank-item" title="${uds} unidades acumuladas">
       <span class="rank-num">${i+1}</span>
       <span class="rank-sku">${s}${depDots}</span>
       <div class="rank-bar-wrap"><div class="rank-bar" style="width:${(count/max*100).toFixed(0)}%"></div></div>
-      <span class="rank-count">${count}</span>
+      <span class="rank-count">${count}<span style="font-size:.6rem;color:var(--text3);font-weight:400;"> días</span></span>
     </div>`;
   }).join('');
 }
@@ -1926,13 +1961,32 @@ function renderStatsModal() {
       </div>`).join('')}
   </div>`;
 
+  // Etiquetado por operador (mes actual): quién cargó cuántos motivos
+  const _mesIni = today.slice(0,7)+'-01';
+  const _etiq = {};
+  records.filter(r => r.fecha >= _mesIni && (r.cat||'') && (r.motivoExtra||'').trim()).forEach(r => {
+    const u = r.motivoExtra.trim();
+    _etiq[u] = (_etiq[u]||0) + 1;
+  });
+  const _etiqSorted = Object.entries(_etiq).sort((a,b)=>b[1]-a[1]);
+  const _etiqMax = _etiqSorted[0]?.[1] || 1;
+  const etiqRows = _etiqSorted.map(([u,n],i) =>
+    `<div class="rank-item">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-sku" style="width:140px;">${u}</span>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(n/_etiqMax*100)}%"></div></div>
+      <span class="rank-count">${n}</span>
+    </div>`).join('');
+
   body.innerHTML = generalHtml
     + `<div style="font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:#2B6CB0;font-weight:800;margin-bottom:6px;padding-bottom:6px;border-bottom:2px solid #2B6CB0;">🍕 DISTRIBUCIÓN POR DEPÓSITO</div>`
     + depPiesHtml
     + `<div style="font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:#2B6CB0;font-weight:800;margin:20px 0 14px;padding-bottom:6px;border-bottom:2px solid #2B6CB0;">POR DEPÓSITO — TENDENCIAS</div>`
     + depSections
-    + `<div style="font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:#2B6CB0;font-weight:800;margin:20px 0 14px;padding-bottom:6px;border-bottom:2px solid #2B6CB0;">🏆 RANKING SKUs PROBLEMÁTICOS</div>`
+    + `<div style="font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:#2B6CB0;font-weight:800;margin:20px 0 14px;padding-bottom:6px;border-bottom:2px solid #2B6CB0;">🔁 REINCIDENTES DEL MES (SKUs repetidos en 2+ días)</div>`
     + `<div style="background:#fff;border-radius:6px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.05);">${skuRows||'<div class=\'empty-msg\'>Sin datos</div>'}</div>`
+    + `<div style="font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:#2B6CB0;font-weight:800;margin:20px 0 14px;padding-bottom:6px;border-bottom:2px solid #2B6CB0;">✏️ ETIQUETADO POR OPERADOR (mes actual)</div>`
+    + `<div style="background:#fff;border-radius:6px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.05);">${etiqRows||'<div class=\'empty-msg\'>Sin etiquetas este mes todavía</div>'}</div>`
     + `<div style="font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:#2B6CB0;font-weight:800;margin:20px 0 14px;padding-bottom:6px;border-bottom:2px solid #2B6CB0;">👤 RANKING DE USUARIOS</div>`
     + `<div style="background:#fff;border-radius:6px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,.05);">${uRows||'<div class=\'empty-msg\'>Sin datos</div>'}</div>`;
 
