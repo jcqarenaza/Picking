@@ -414,7 +414,7 @@ let rankDep = 'TODOS';
 let _pieChart = null, _barDepChart = null;
 let lastServerTs = 0, pollTimer = null, isSyncing = false, pendingSave = false;
 let _chartRenderTimer = null, _lastRenderHash = '';
-const POLL_INTERVAL = 8000;
+const POLL_INTERVAL = 15000;
 
 const DEP_COLOR  = {PICO:'#f07878',ROSARIO:'#7bb3f5',MDP:'#b39ddb',BSAS:'#f59e42'};
 const DEP_NAME   = {PICO:'📍 PICO',ROSARIO:'🌹 ROSARIO',MDP:'🌊 MAR DEL PLATA',BSAS:'🏙️ BUENOS AIRES'};
@@ -468,9 +468,17 @@ function setSyncStatus(state, label) {
   const _sl = document.getElementById('sync-label'); if(_sl) _sl.textContent = label;
 }
 
+// Acciones de escritura que no necesitan leer la respuesta (evita el redirect que da 404)
+const FIRE_AND_FORGET = ['upsertBatch','upsertEficiencia','updateMotivo','add','delete'];
+
 async function apiCall(params, _retry=2) {
   if (!SHEET_URL) throw new Error('URL no configurada');
   const isGet = ['get','getRecent','getPage','getEficiencia','getEfPage','ping'].includes(params.action);
+  if (!isGet && FIRE_AND_FORGET.includes(params.action)) {
+    // no-cors: el POST llega al GAS pero el browser no sigue el redirect de respuesta
+    await fetch(SHEET_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(params) });
+    return { ok:true, sent:true };
+  }
   let url, opts;
   if (isGet) {
     const qs = Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
@@ -489,7 +497,6 @@ async function apiCall(params, _retry=2) {
     if (data.error) throw new Error(data.error);
     return data;
   } catch(e) {
-    // Los 404/failed-to-fetch del redirect a googleusercontent son transitorios: reintentar
     if (_retry > 0 && (e.message.includes('404') || e.message.includes('fetch') || e.message.includes('inválida'))) {
       await new Promise(r => setTimeout(r, 700 * (3 - _retry)));
       return apiCall(params, _retry - 1);
@@ -689,25 +696,18 @@ function handleFile(file) {
         // Pausar el polling mientras subimos — evita requests simultáneas al GAS
         pendingSave = true;
         const CHUNK = 50;
-        let totalAdded = 0, totalUpdated = 0;
         try {
           for (let i = 0; i < batch.length; i += CHUNK) {
             const chunk = batch.slice(i, i + CHUNK);
             status.textContent = `Subiendo ${Math.min(i+CHUNK, batch.length)}/${batch.length}...`;
-            try {
-              const res = await apiCall({ action:'upsertBatch', records:chunk });
-              totalAdded   += res.added   || 0;
-              totalUpdated += res.updated || 0;
-            } catch(chunkErr) {
-              console.warn('Chunk error (datos guardados igual):', chunkErr.message);
-            }
+            await apiCall({ action:'upsertBatch', records:chunk });
           }
         } finally { pendingSave = false; }
         status.className = 'import-status ok';
-        const msg = `✅ ${totalAdded} nuevos, ${totalUpdated} actualizados — ${file.name}`;
+        const msg = `✅ ${batch.length} registros subidos — ${file.name}`;
         status.textContent = msg;
         toast(msg);
-        pollNow();
+        setTimeout(pollNow, 1500); // dar tiempo al GAS a procesar antes de refrescar
       } else {
         records.unshift(...batch.reverse()); renderAll();
         status.className='import-status ok';
@@ -2114,8 +2114,8 @@ async function importEficiencia(wb, fecha, sheetName) {
     populateMonthPicker('modal-mes-picker', records);
     if (SHEET_URL) {
       try {
-        const efRes = await apiCall({action:'upsertEficiencia', records:batch});
-        toast('⚡ Eficiencia: ' + (efRes.added||0) + ' nuevos, ' + (efRes.updated||0) + ' actualizados');
+        await apiCall({action:'upsertEficiencia', records:batch});
+        toast('⚡ Eficiencia del día subida (' + batch.length + ' usuarios)');
       } catch(efErr) {
         toast('❌ Eficiencia no grabó: ' + efErr.message, true);
       }
