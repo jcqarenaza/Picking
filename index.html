@@ -468,7 +468,7 @@ function setSyncStatus(state, label) {
   const _sl = document.getElementById('sync-label'); if(_sl) _sl.textContent = label;
 }
 
-async function apiCall(params) {
+async function apiCall(params, _retry=2) {
   if (!SHEET_URL) throw new Error('URL no configurada');
   const isGet = ['get','getRecent','getPage','getEficiencia','getEfPage','ping'].includes(params.action);
   let url, opts;
@@ -480,13 +480,22 @@ async function apiCall(params) {
     url = SHEET_URL;
     opts = { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(params), redirect:'follow' };
   }
-  const resp = await fetch(url, opts);
-  if (!resp.ok) throw new Error('HTTP ' + resp.status);
-  const text = await resp.text();
-  let data;
-  try { data = JSON.parse(text); } catch(e) { throw new Error('Respuesta inválida del servidor'); }
-  if (data.error) throw new Error(data.error);
-  return data;
+  try {
+    const resp = await fetch(url, opts);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Respuesta inválida del servidor'); }
+    if (data.error) throw new Error(data.error);
+    return data;
+  } catch(e) {
+    // Los 404/failed-to-fetch del redirect a googleusercontent son transitorios: reintentar
+    if (_retry > 0 && (e.message.includes('404') || e.message.includes('fetch') || e.message.includes('inválida'))) {
+      await new Promise(r => setTimeout(r, 700 * (3 - _retry)));
+      return apiCall(params, _retry - 1);
+    }
+    throw e;
+  }
 }
 
 async function fetchFromSheet(force=false) {
@@ -507,12 +516,14 @@ async function fetchFromSheet(force=false) {
     // Primera página: check de ts + total
     let allRecords = (first.records||[]).map(normalizeRecord);
     if (first.hasMore) {
-      // Bajar el resto de las páginas EN PARALELO
+      // Bajar el resto de las páginas en tandas de 3 (evita rate-limit del GAS)
       const totalPages = Math.ceil((first.total||0) / 100);
-      const promises = [];
-      for (let p = 1; p < totalPages; p++) promises.push(apiCall({action:'getPage', page:p, size:100}));
-      const results = await Promise.all(promises);
-      results.forEach(data => { allRecords = allRecords.concat((data.records||[]).map(normalizeRecord)); });
+      for (let p = 1; p < totalPages; p += 3) {
+        const promises = [];
+        for (let q = p; q < Math.min(p + 3, totalPages); q++) promises.push(apiCall({action:'getPage', page:q, size:100}));
+        const results = await Promise.all(promises);
+        results.forEach(data => { allRecords = allRecords.concat((data.records||[]).map(normalizeRecord)); });
+      }
     }
 
     // Merge preservando etiquetas locales
@@ -675,20 +686,23 @@ function handleFile(file) {
 
       status.textContent = `Subiendo ${batch.length} registros...`;
       if (SHEET_URL) {
-        // Enviar en lotes de 50 para evitar respuestas grandes que Google redirige
+        // Pausar el polling mientras subimos — evita requests simultáneas al GAS
+        pendingSave = true;
         const CHUNK = 50;
         let totalAdded = 0, totalUpdated = 0;
-        for (let i = 0; i < batch.length; i += CHUNK) {
-          const chunk = batch.slice(i, i + CHUNK);
-          status.textContent = `Subiendo ${Math.min(i+CHUNK, batch.length)}/${batch.length}...`;
-          try {
-            const res = await apiCall({ action:'upsertBatch', records:chunk });
-            totalAdded   += res.added   || 0;
-            totalUpdated += res.updated || 0;
-          } catch(chunkErr) {
-            console.warn('Chunk error (datos guardados igual):', chunkErr.message);
+        try {
+          for (let i = 0; i < batch.length; i += CHUNK) {
+            const chunk = batch.slice(i, i + CHUNK);
+            status.textContent = `Subiendo ${Math.min(i+CHUNK, batch.length)}/${batch.length}...`;
+            try {
+              const res = await apiCall({ action:'upsertBatch', records:chunk });
+              totalAdded   += res.added   || 0;
+              totalUpdated += res.updated || 0;
+            } catch(chunkErr) {
+              console.warn('Chunk error (datos guardados igual):', chunkErr.message);
+            }
           }
-        }
+        } finally { pendingSave = false; }
         status.className = 'import-status ok';
         const msg = `✅ ${totalAdded} nuevos, ${totalUpdated} actualizados — ${file.name}`;
         status.textContent = msg;
@@ -2117,10 +2131,12 @@ async function fetchEficiencia(retries=2) {
     let all = firstEf.records||[];
     if (firstEf.hasMore) {
       const totalPages = Math.ceil((firstEf.total||0) / 100);
-      const promises = [];
-      for (let p = 1; p < totalPages; p++) promises.push(apiCall({action:'getEfPage', page:p, size:100}));
-      const results = await Promise.all(promises);
-      results.forEach(d => { all = all.concat(d.records||[]); });
+      for (let p = 1; p < totalPages; p += 3) {
+        const promises = [];
+        for (let q = p; q < Math.min(p + 3, totalPages); q++) promises.push(apiCall({action:'getEfPage', page:q, size:100}));
+        const results = await Promise.all(promises);
+        results.forEach(d => { all = all.concat(d.records||[]); });
+      }
     }
     if (all.length) {
       const incoming = all.map(r=>({...r,
