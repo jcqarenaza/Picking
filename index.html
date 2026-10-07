@@ -1527,11 +1527,15 @@ function renderModal() {
   }
   const q=document.getElementById('modal-search').value.trim().toUpperCase();
   if(q) filtered=filtered.filter(r=>r.sku.includes(q)||(r.usuario||'').toUpperCase().includes(q));
-  // sin motivo primero, luego por fecha más nueva
+  // sin motivo primero, luego por SKU y cliente (agrupa repetidos para etiquetar más rápido)
   filtered = filtered.slice().sort((a,b)=>{
     const aNoMot=!(a.cat||a.motivo)?0:1;
     const bNoMot=!(b.cat||b.motivo)?0:1;
     if(aNoMot!==bNoMot) return aNoMot-bNoMot;
+    const skuCmp = String(a.sku||'').localeCompare(String(b.sku||''));
+    if(skuCmp!==0) return skuCmp;
+    const cliCmp = String(a.cliente||'').localeCompare(String(b.cliente||''));
+    if(cliCmp!==0) return cliCmp;
     return b.fecha.localeCompare(a.fecha);
   });
   const _mc=document.getElementById('modal-count'); if(_mc) _mc.textContent=filtered.length;
