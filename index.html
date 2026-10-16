@@ -754,10 +754,14 @@ function checkStaleData() {
   const fechas = [...new Set(records.map(r=>r.fecha))].filter(Boolean).sort();
   const ult = fechas[fechas.length-1];
   if (!ult) { el.style.display='none'; return; }
+  // Sistema a día vencido: hoy se carga el dato de AYER, así que 1-2 días de diferencia es normal.
+  // Avisar solo cuando falta más de un día de carga (3+ días), con margen extra el lunes (domingo sin datos).
   const diffDias = Math.floor((new Date(today+'T12:00:00') - new Date(ult+'T12:00:00')) / 86400000);
-  if (diffDias >= 2) {
+  const esLunes = new Date(today+'T12:00:00').getDay() === 1;
+  const umbral = esLunes ? 4 : 3;
+  if (diffDias >= umbral) {
     const [y,m,d] = ult.split('-');
-    el.textContent = `⚠ Último dato cargado: ${d}/${m} — hace ${diffDias} días. Importá el Excel para actualizar.`;
+    el.textContent = `⚠ Último dato cargado: ${d}/${m}. Falta importar el Excel de días anteriores.`;
     el.style.display = 'block';
   } else {
     el.style.display = 'none';
