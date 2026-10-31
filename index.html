@@ -2144,6 +2144,20 @@ function fmtMinutes(mins) {
 function fmtSeconds(mins) { return fmtMinutes(mins); } // alias usado en todo el código
 function fmtSecs(secs)    { return fmtMinutes(secs / 60); }
 
+// Entero robusto: "1.152" (miles con punto) -> 1152, "1,152" -> 1152, "1152" -> 1152
+function parseCount(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  if (typeof v === 'number') {
+    if (Number.isInteger(v)) return v;
+    const r = Math.round(v * 1000);
+    return (Math.abs(v*1000 - r) < 1e-6 && v < 1000) ? r : Math.round(v);
+  }
+  let t = String(v).trim().replace(/\s/g,'');
+  if (/^\d{1,3}([.,]\d{3})+$/.test(t)) return parseInt(t.replace(/[.,]/g,''),10);
+  const n = parseFloat(t.replace(',','.'));
+  return isNaN(n) ? 0 : Math.round(n);
+}
+
 async function importEficiencia(wb, fecha, sheetName) {
   try {
     const ws = wb.Sheets[sheetName || 'Datos' || 'datos'];
@@ -2154,12 +2168,12 @@ async function importEficiencia(wb, fecha, sheetName) {
       fecha,
       user:    String(r[0]||'').trim(),
       dep:     DEP_MAP[String(r[1]||'').trim().toUpperCase()] || String(r[1]||'').trim(),
-      usp:     parseInt(r[2])||0,
+      usp:     parseCount(r[2]),
       promCod: excelTimeToMinutes(r[3]),  // minutos decimales
       promPed: excelTimeToMinutes(r[4]),  // minutos decimales
-      ped:     parseInt(r[5])||0,
-      cod:     parseInt(r[6])||0,
-      uds:     parseInt(r[7])||0,
+      ped:     parseCount(r[5]),
+      cod:     parseCount(r[6]),
+      uds:     parseCount(r[7]),
       tiempo:  excelTimeToMinutes(r[8]),  // minutos decimales
     }));
     if (!batch.length) return;
