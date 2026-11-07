@@ -218,7 +218,7 @@ label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--te
 .modal-body::-webkit-scrollbar{width:4px;}
 .modal-body::-webkit-scrollbar-thumb{background:var(--border);}
 .modal-table{width:100%;border-collapse:collapse;font-size:.88rem;}
-.modal-table th{text-align:left;padding:9px 14px;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--blue);border-bottom:2px solid var(--border);font-weight:700;position:sticky;top:0;background:var(--header-bg);z-index:1;}
+.modal-table th{text-align:left;padding:9px 14px;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--blue);border-bottom:2px solid var(--border);font-weight:700;position:sticky;top:0;background:#eef2f9;z-index:3;box-shadow:0 1px 0 var(--border);}
 .modal-table td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
 .modal-table tr:hover td{background:var(--blue-lt);}
 .motivo-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -1617,7 +1617,7 @@ function renderObsThread(arr, compact=false) {
     // preview compacto en la tabla
     const last = arr[arr.length-1];
     const preview = last.texto.substring(0,50)+(last.texto.length>50?'…':'');
-    return `<div class="obs-preview">💬 <b style="color:var(--accent)">${last.user}</b>: ${preview}${arr.length>1?' <span style="color:#aaa;font-size:.7rem;">(+${arr.length-1} más)</span>':''}</div>`;
+    return `<div class="obs-preview">💬 <b style="color:var(--accent)">${last.user}</b>: ${preview}${arr.length>1?` <span style="color:#aaa;font-size:.7rem;">(+${arr.length-1} más)</span>`:''}</div>`;
   }
   // hilo completo
   return arr.map(c=>`
