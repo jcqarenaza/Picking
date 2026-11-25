@@ -331,6 +331,14 @@ header.top3{display:flex;gap:24px;align-items:center;justify-content:space-betwe
 .top3-acts .btn-export.manual{background:#fff;color:var(--blue);border:1px solid var(--border-strong);}
 .top3-acts .btn-export.manual:hover{background:var(--blue-lt);}
 @media(max-width:700px){header.top3{margin:8px;padding:12px 14px;}.top3-right{flex-basis:100%;}.top3 .hello{font-size:1.35rem;}}
+
+/* panel doble: igualar alturas con Eficiencia */
+.mid-row{align-items:stretch;}
+.panel-dual{display:flex;flex-direction:column;}
+.panel-dual .panel-body{flex:1;display:flex;flex-direction:column;gap:8px;}
+.panel-dual .chart-wrap{flex:1 1 0;min-height:190px;height:auto;}
+.chart-sub{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:'Outfit',sans-serif;font-weight:600;font-size:.95rem;color:var(--text);padding-top:10px;border-top:1px solid var(--border);}
+.chart-sub small{font-family:'Figtree',sans-serif;font-weight:500;font-size:.72rem;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -381,9 +389,13 @@ header.top3{display:flex;gap:24px;align-items:center;justify-content:space-betwe
 
   <!-- CHARTS -->
   <div class="mid-row">
-    <div class="panel">
+    <div class="panel panel-dual">
       <div class="panel-head"><h2>📈 Evolución diaria — picks en 0</h2></div>
-      <div class="panel-body"><div class="chart-wrap"><canvas id="lineChart"></canvas></div></div>
+      <div class="panel-body">
+        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+        <div class="chart-sub"><span>⚡ Pickeo de todos · picks × 1000 por día</span><small>menor = mejor</small></div>
+        <div class="chart-wrap"><canvas id="pxChart"></canvas></div>
+      </div>
     </div>
     <!-- EFICIENCIA inline -->
     <div class="panel" id="ef-panel">
@@ -2351,7 +2363,43 @@ async function fetchEficiencia(retries=2) {
   }
 }
 
+function renderPxChart() {
+  const cv = document.getElementById('pxChart');
+  if (!cv || !window.Chart) return;
+  if (window._pxChart) { window._pxChart.destroy(); window._pxChart = null; }
+  if (!efRecords.length) return;
+  const byDay = {};
+  efRecords.forEach(r => {
+    const f = String(r.fecha||'').split('T')[0]; if (!f) return;
+    const d = byDay[f] || (byDay[f] = {ALL:{u:0,n:0}});
+    const k = r.dep; if (!d[k]) d[k] = {u:0,n:0};
+    d[k].u += r.usp||0; d[k].n += r.uds||0;
+    d.ALL.u += r.usp||0; d.ALL.n += r.uds||0;
+  });
+  const dates = Object.keys(byDay).sort().slice(-14);
+  if (!dates.length) return;
+  const px = (f,k) => { const x = byDay[f][k]; return x && x.n ? Math.round(x.u/x.n*10000)/10 : null; };
+  const series = [
+    {k:'ALL', label:'General', color:'#1a3c78', w:3.5},
+    {k:'PICO', label:'Pico', color:DEP_COLOR.PICO, w:2.2},
+    {k:'ROSARIO', label:'Rosario', color:DEP_COLOR.ROSARIO, w:2.2},
+    {k:'MDP', label:'Mar del Plata', color:DEP_COLOR.MDP, w:2.2},
+    {k:'BSAS', label:'Buenos Aires', color:DEP_COLOR.BSAS, w:2.2}
+  ];
+  window._pxChart = new Chart(cv, {type:'line',
+    data:{labels:dates.map(f=>f.slice(8,10)+'/'+f.slice(5,7)),
+      datasets:series.map(x=>({label:x.label, data:dates.map(f=>px(f,x.k)), borderColor:x.color, backgroundColor:x.color,
+        borderWidth:x.w, pointRadius:x.k==='ALL'?4:2.5, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:x.color, pointBorderWidth:2,
+        tension:.4, fill:false, spanGaps:true}))},
+    options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+      plugins:{legend:{labels:{color:'#1F2A44', font:{family:'Figtree',size:12}, padding:14}}},
+      scales:{x:{ticks:{color:'#5A6478', font:{family:'JetBrains Mono',size:10}}, grid:{display:false}},
+              y:{ticks:{color:'#5A6478', font:{family:'JetBrains Mono',size:10}}, grid:{color:'#EEF1F6'}, beginAtZero:true}}}
+  });
+}
+
 function renderEficiencia() {
+  try { renderPxChart(); } catch(e) { console.warn('pxChart', e); }
   const el = document.getElementById('ef-panel');
   if (!el || !efRecords.length) return;
 
