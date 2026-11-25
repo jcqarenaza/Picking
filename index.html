@@ -273,10 +273,10 @@ input:focus,select:focus,textarea:focus{border-color:#3F6FD8;box-shadow:0 0 0 3p
 .btn-isave{padding:6px 18px;}.btn-icancel{padding:6px 14px;}
 .import-bar{border-radius:24px;box-shadow:var(--shadow);}
 .drop-zone{border-color:#B9CBEF;background:#fff;}
-.hero{margin:18px 24px 0;border-radius:28px;padding:22px 30px;background:linear-gradient(120deg,#ECE7FF,#fff 70%);border:1px solid var(--border);}
-.hello{font-weight:700;font-size:2rem;letter-spacing:-.4px;color:var(--text);}
+.hero{margin:12px 24px 0;border-radius:20px;padding:10px 22px;background:linear-gradient(120deg,#ECE7FF,#fff 70%);border:1px solid var(--border);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+.hello{font-weight:600;font-size:1.15rem;letter-spacing:-.2px;color:var(--text);margin:0;}
 .hello b{color:#3F6FD8;font-weight:700;}
-.hello-sub{font-size:.88rem;color:var(--text3);margin-top:4px;font-weight:500;}
+.hello-sub{font-size:.8rem;color:var(--text3);margin:0;font-weight:500;}
 .dep-card{border-radius:24px;background:linear-gradient(160deg,var(--dc-lt),#fff 62%);box-shadow:var(--shadow);}
 .dep-card-top{border-radius:24px 24px 0 0;}
 .dep-card-top:hover{background:rgba(255,255,255,.55);}
@@ -452,7 +452,20 @@ function updateHello() {
   if (ce) ce.style.display = nm ? '' : 'none';
 }
 updateHello();
-if (window.Chart) { Chart.defaults.font.family = "'Figtree',sans-serif"; Chart.defaults.color = '#5A6478'; }
+if (window.Chart) {
+  const D = Chart.defaults;
+  D.font.family = "'Figtree',sans-serif"; D.color = '#5A6478';
+  D.plugins.legend.labels.usePointStyle = true; D.plugins.legend.labels.pointStyle = 'circle';
+  D.plugins.legend.labels.boxWidth = 8; D.plugins.legend.labels.boxHeight = 8;
+  D.plugins.tooltip.backgroundColor = '#1F2A44'; D.plugins.tooltip.cornerRadius = 12; D.plugins.tooltip.padding = 10;
+  D.plugins.tooltip.titleFont = {family:"'Outfit',sans-serif", size:12, weight:'600'};
+  D.plugins.tooltip.bodyFont = {family:"'Figtree',sans-serif", size:12};
+  D.plugins.tooltip.boxPadding = 4; D.plugins.tooltip.usePointStyle = true;
+  D.scale.grid.color = '#EEF1F6'; D.scale.border.display = false;
+  Chart.overrides.doughnut.cutout = '68%';
+  D.elements.arc.borderRadius = 6; D.elements.arc.hoverOffset = 6;
+  D.elements.bar.borderRadius = 8; D.elements.bar.borderSkipped = false;
+}
 // Si ya tiene nombre, ocultar la barra
 if (currentUser) document.getElementById('config-bar').style.display = 'none';
 
@@ -498,7 +511,7 @@ const CATS = {
   'Sistemas':       ['Demora en Stock (Actualización)','Error de Sincronización','Falta Factura','Error de Factura'],
   'Compras':        ['Cambio de Código','Código no cargado'],
 };
-const CAT_COLOR = {Depo:'#D9604A','No encontrado':'#C2602A',Admin:'#A9741C',Sistemas:'#3F6FD8',Compras:'#6B55C9'};
+const CAT_COLOR = {Depo:'#E0624D','No encontrado':'#E39A2D',Admin:'#2FA37A',Sistemas:'#4A7DE0',Compras:'#8A6FE0'};
 const CAT_ICON  = {Depo:'🏭','No encontrado':'🔍',Admin:'📋',Sistemas:'💻',Compras:'🛒'};
 
 const today = new Date().toISOString().split('T')[0];
@@ -1148,7 +1161,7 @@ function renderChart() {
   if(window._chart) window._chart.destroy();
   if(!dates.length){window._chart=new Chart(cv,{type:'line',data:{labels:['Sin datos'],datasets:[{label:'',data:[0],borderColor:'#E8ECF3'}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5A6478'}},y:{ticks:{color:'#5A6478'}}}}}); return;}
   window._chart=new Chart(cv,{type:'line',
-    data:{labels:dates,datasets:deps.map(d=>({label:ln[d],data:dates.map(dt=>dm[dt]?.[d]||0),borderColor:DEP_COLOR[d],backgroundColor:DEP_COLOR[d]+'22',borderWidth:2,pointRadius:4,pointBackgroundColor:DEP_COLOR[d],tension:.3,fill:false}))},
+    data:{labels:dates,datasets:deps.map(d=>({label:ln[d],data:dates.map(dt=>dm[dt]?.[d]||0),borderColor:DEP_COLOR[d],backgroundColor:DEP_COLOR[d]+'22',borderWidth:3,pointRadius:3.5,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:DEP_COLOR[d],pointBorderWidth:2,tension:.4,fill:false}))},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#1F2A44',font:{family:'Figtree',size:12},boxWidth:12,padding:16}}},
       scales:{x:{ticks:{color:'#5A6478',font:{family:'JetBrains Mono',size:10}},grid:{color:'#E8ECF3'}},y:{ticks:{color:'#5A6478',font:{family:'JetBrains Mono',size:10}},grid:{color:'#E8ECF3'},beginAtZero:true,precision:0}}}
   });
@@ -1211,11 +1224,14 @@ function renderEvoChart() {
         data: fechas.map(f => etiquetados.filter(r=>r.fecha===f&&(r.cat||r.motivo||'')===cat).length),
         borderColor: CAT_COLOR[cat],
         backgroundColor: CAT_COLOR[cat]+'33',
-        borderWidth: 2,
+        borderWidth: 3,
         pointRadius: 4,
-        pointHoverRadius: 6,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: CAT_COLOR[cat],
+        pointBorderWidth: 2,
         fill: false,
-        tension: 0.3,
+        tension: 0.4,
       }))
     },
     options: {
@@ -1452,7 +1468,7 @@ function renderPieChart(data) {
   if(_pieChart) _pieChart.destroy();
   if(!data.length){_pieChart=null;return;}
   _pieChart=new Chart(cv,{type:'doughnut',
-    data:{labels:cats,datasets:[{data:counts,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},
+    data:{labels:cats,datasets:[{data:counts,backgroundColor:colors,borderWidth:3,borderColor:'#fff',borderRadius:6,hoverOffset:6}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#1F2A44',font:{family:'Figtree',size:12},boxWidth:12,padding:10}}}}
   });
 }
@@ -1468,7 +1484,7 @@ function renderBarDepChart(data) {
     data:{labels:deps,datasets:cats.map(cat=>({
       label:cat,
       data:deps.map(d=>data.filter(r=>r.dep===d&&(r.cat||r.motivo||'')===cat).length),
-      backgroundColor:CAT_COLOR[cat]+'cc',borderColor:CAT_COLOR[cat],borderWidth:1
+      backgroundColor:CAT_COLOR[cat]+'e6',borderWidth:0,borderRadius:6,borderSkipped:false,maxBarThickness:56
     }))},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{labels:{color:'#1F2A44',font:{family:'Figtree',size:11},boxWidth:10,padding:8}}},
@@ -2075,7 +2091,7 @@ function renderStatsModal() {
     if (smPie._chart) smPie._chart.destroy();
     const counts = cats.map(c=>data.filter(r=>(r.cat||r.motivo||'')===c).length);
     smPie._chart = new Chart(smPie, {type:'doughnut',
-      data:{labels:cats, datasets:[{data:counts, backgroundColor:cats.map(c=>CAT_COLOR[c]||'#8791A3'), borderWidth:2, borderColor:'#fff'}]},
+      data:{labels:cats, datasets:[{data:counts, backgroundColor:cats.map(c=>CAT_COLOR[c]||'#8791A3'), borderWidth:3, borderColor:'#fff', borderRadius:6, hoverOffset:6}]},
       options:{responsive:true, maintainAspectRatio:false,
         plugins:{legend:{position:'right', labels:{color:'#1F2A44', font:{family:'Figtree',size:11}, boxWidth:10, padding:6}}}}
     });
@@ -2088,7 +2104,7 @@ function renderStatsModal() {
     smBar._chart = new Chart(smBar, {type:'bar',
       data:{labels:chartDeps, datasets:cats.map(cat=>({
         label:cat, data:chartDeps.map(d=>data.filter(r=>r.dep===d&&(r.cat||r.motivo||'')===cat).length),
-        backgroundColor:CAT_COLOR[cat]+'cc', borderColor:CAT_COLOR[cat], borderWidth:1
+        backgroundColor:CAT_COLOR[cat]+'e6', borderWidth:0, borderRadius:6, borderSkipped:false, maxBarThickness:56
       }))},
       options:{responsive:true, maintainAspectRatio:false,
         plugins:{legend:{labels:{color:'#1F2A44', font:{family:'Figtree',size:10}, boxWidth:8, padding:6}}},
@@ -2109,7 +2125,7 @@ function renderStatsModal() {
           datasets:cats.map(cat=>({
             label:cat, borderColor:CAT_COLOR[cat], backgroundColor:CAT_COLOR[cat]+'22',
             data:fechas.map(f=>etiq.filter(r=>r.fecha===f&&(r.cat||r.motivo||'')===cat).length),
-            borderWidth:2, pointRadius:3, tension:0.3, fill:false
+            borderWidth:3, pointRadius:3.5, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:CAT_COLOR[cat], pointBorderWidth:2, tension:0.4, fill:false
           }))},
         options:{responsive:true, maintainAspectRatio:false,
           interaction:{mode:'index', intersect:false},
@@ -2141,8 +2157,8 @@ function renderStatsModal() {
     cv._chart = new Chart(cv, {type:'doughnut',
       data:{labels:depSubLabels, datasets:[{
         data:depSubLabels.map(s=>depSubCounts[s].count),
-        backgroundColor:depSubLabels.map(s=>depSubCounts[s].color+'cc'),
-        borderWidth:1, borderColor:'#fff'
+        backgroundColor:depSubLabels.map(s=>depSubCounts[s].color+'e6'),
+        borderWidth:3, borderColor:'#fff', borderRadius:6, hoverOffset:6
       }]},
       options:{responsive:true, maintainAspectRatio:false,
         plugins:{legend:{position:'bottom', labels:{color:'#1F2A44', font:{family:'Figtree',size:8}, boxWidth:7, padding:3}}}}
