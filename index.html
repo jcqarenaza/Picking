@@ -1183,19 +1183,28 @@ function renderLog() {
   }).join('');
 }
 
+// Eje de fechas común para los dos gráficos del panel (picks en 0 y picks x 1000)
+function chartDates() {
+  const set = new Set();
+  records.forEach(r => { if (r.fecha) set.add(String(r.fecha).split('T')[0]); });
+  efRecords.forEach(r => { if (r.fecha) set.add(String(r.fecha).split('T')[0]); });
+  return [...set].sort().slice(-14);
+}
+
 function renderChart() {
+  try { renderPxChart(); } catch(e) { console.warn('pxChart', e); }
   const dm={};
   records.forEach(r=>{ if(!dm[r.fecha]) dm[r.fecha]={PICO:0,ROSARIO:0,MDP:0,BSAS:0}; dm[r.fecha][r.dep]++; });
-  const dates=Object.keys(dm).sort().slice(-14);
+  const dates=chartDates();
   const deps=['PICO','ROSARIO','MDP','BSAS'];
   const ln={PICO:'Pico',ROSARIO:'Rosario',MDP:'Mar del Plata',BSAS:'Buenos Aires'};
   const cv=document.getElementById('lineChart');
   if(window._chart) window._chart.destroy();
   if(!dates.length){window._chart=new Chart(cv,{type:'line',data:{labels:['Sin datos'],datasets:[{label:'',data:[0],borderColor:'#E8ECF3'}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5A6478'}},y:{ticks:{color:'#5A6478'}}}}}); return;}
   window._chart=new Chart(cv,{type:'line',
-    data:{labels:dates,datasets:deps.map(d=>({label:ln[d],data:dates.map(dt=>dm[dt]?.[d]||0),borderColor:DEP_COLOR[d],backgroundColor:DEP_COLOR[d]+'22',borderWidth:3,pointRadius:3.5,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:DEP_COLOR[d],pointBorderWidth:2,tension:.4,fill:false}))},
+    data:{labels:dates.map(f=>f.slice(8,10)+'/'+f.slice(5,7)),datasets:deps.map(d=>({label:ln[d],data:dates.map(dt=>dm[dt]?.[d]||0),borderColor:DEP_COLOR[d],backgroundColor:DEP_COLOR[d]+'22',borderWidth:3,pointRadius:3.5,pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:DEP_COLOR[d],pointBorderWidth:2,tension:.4,fill:false}))},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#1F2A44',font:{family:'Figtree',size:12},boxWidth:12,padding:16}}},
-      scales:{x:{ticks:{color:'#5A6478',font:{family:'JetBrains Mono',size:10}},grid:{color:'#E8ECF3'}},y:{ticks:{color:'#5A6478',font:{family:'JetBrains Mono',size:10}},grid:{color:'#E8ECF3'},beginAtZero:true,precision:0}}}
+      scales:{x:{ticks:{color:'#5A6478',font:{family:'JetBrains Mono',size:10}},grid:{color:'#E8ECF3'}},y:{ticks:{color:'#5A6478',font:{family:'JetBrains Mono',size:10}},grid:{color:'#E8ECF3'},beginAtZero:true,precision:0,afterFit:sc=>{sc.width=44;}}}}
   });
 }
 
@@ -2376,9 +2385,9 @@ function renderPxChart() {
     d[k].u += r.usp||0; d[k].n += r.uds||0;
     d.ALL.u += r.usp||0; d.ALL.n += r.uds||0;
   });
-  const dates = Object.keys(byDay).sort().slice(-14);
+  const dates = chartDates();
   if (!dates.length) return;
-  const px = (f,k) => { const x = byDay[f][k]; return x && x.n ? Math.round(x.u/x.n*10000)/10 : null; };
+  const px = (f,k) => { const x = byDay[f] && byDay[f][k]; return x && x.n ? Math.round(x.u/x.n*10000)/10 : null; };
   const series = [
     {k:'ALL', label:'General', color:'#1a3c78', w:3.5},
     {k:'PICO', label:'Pico', color:DEP_COLOR.PICO, w:2.2},
@@ -2394,12 +2403,12 @@ function renderPxChart() {
     options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
       plugins:{legend:{labels:{color:'#1F2A44', font:{family:'Figtree',size:12}, padding:14}}},
       scales:{x:{ticks:{color:'#5A6478', font:{family:'JetBrains Mono',size:10}}, grid:{display:false}},
-              y:{ticks:{color:'#5A6478', font:{family:'JetBrains Mono',size:10}}, grid:{color:'#EEF1F6'}, beginAtZero:true}}}
+              y:{ticks:{color:'#5A6478', font:{family:'JetBrains Mono',size:10}}, grid:{color:'#EEF1F6'}, beginAtZero:true, afterFit:sc=>{sc.width=44;}}}}
   });
 }
 
 function renderEficiencia() {
-  try { renderPxChart(); } catch(e) { console.warn('pxChart', e); }
+  try { renderChart(); } catch(e) { console.warn('chart', e); }
   const el = document.getElementById('ef-panel');
   if (!el || !efRecords.length) return;
 
