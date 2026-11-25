@@ -1188,7 +1188,10 @@ function chartDates() {
   const set = new Set();
   records.forEach(r => { if (r.fecha) set.add(String(r.fecha).split('T')[0]); });
   efRecords.forEach(r => { if (r.fecha) set.add(String(r.fecha).split('T')[0]); });
-  return [...set].sort().slice(-14);
+  // Se trabaja a día vencido: el día de hoy todavía no tiene datos válidos, se corta en el anterior
+  const n = new Date();
+  const hoy = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+  return [...set].filter(f => f < hoy).sort().slice(-14);
 }
 
 function renderChart() {
