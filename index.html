@@ -393,7 +393,7 @@ header.top3{display:flex;gap:24px;align-items:center;justify-content:space-betwe
       <div class="panel-head"><h2>📈 Evolución diaria — picks en 0</h2></div>
       <div class="panel-body">
         <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
-        <div class="chart-sub"><span>⚡ Pickeo de todos · picks × 1000 por día</span><small>menor = mejor</small></div>
+        <div class="chart-sub"><span>⚡ Total general · suma de los 4 depósitos</span><small>barras: picks en 0 · línea: picks × 1000 (menor = mejor)</small></div>
         <div class="chart-wrap"><canvas id="pxChart"></canvas></div>
       </div>
     </div>
@@ -2392,22 +2392,24 @@ function renderPxChart() {
   const dates = chartDates();
   if (!dates.length) return;
   const px = (f,k) => { const x = byDay[f] && byDay[f][k]; return x && x.n ? Math.round(x.u/x.n*10000)/10 : null; };
-  const series = [
-    {k:'ALL', label:'General', color:'#1a3c78', w:3.5},
-    {k:'PICO', label:'Pico', color:DEP_COLOR.PICO, w:2.2},
-    {k:'ROSARIO', label:'Rosario', color:DEP_COLOR.ROSARIO, w:2.2},
-    {k:'MDP', label:'Mar del Plata', color:DEP_COLOR.MDP, w:2.2},
-    {k:'BSAS', label:'Buenos Aires', color:DEP_COLOR.BSAS, w:2.2}
-  ];
-  window._pxChart = new Chart(cv, {type:'line',
-    data:{labels:dates.map(f=>f.slice(8,10)+'/'+f.slice(5,7)),
-      datasets:series.map(x=>({label:x.label, data:dates.map(f=>px(f,x.k)), borderColor:x.color, backgroundColor:x.color,
-        borderWidth:x.w, pointRadius:x.k==='ALL'?4:2.5, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:x.color, pointBorderWidth:2,
-        tension:.4, fill:false, spanGaps:true}))},
+  // Total general (suma de los 4 depósitos): barras = picks en 0, línea = picks x 1000
+  const tot = {};
+  records.forEach(r => { const f = String(r.fecha||'').split('T')[0]; if (f) tot[f] = (tot[f]||0) + 1; });
+  const labels = dates.map(f => f.slice(8,10)+'/'+f.slice(5,7));
+  const mono = {family:'JetBrains Mono', size:10};
+  window._pxChart = new Chart(cv, {type:'bar',
+    data:{labels,
+      datasets:[
+        {type:'line', label:'Picks × 1000 (general)', data:dates.map(f=>px(f,'ALL')), yAxisID:'y2', borderColor:'#1a3c78', backgroundColor:'#1a3c78',
+          borderWidth:3.5, pointRadius:4, pointHoverRadius:6, pointBackgroundColor:'#fff', pointBorderColor:'#1a3c78', pointBorderWidth:2, tension:.4, fill:false, spanGaps:true, order:1},
+        {type:'bar', label:'Picks en 0 (total)', data:dates.map(f=>tot[f]||0), yAxisID:'y', backgroundColor:'#C9BDF3', hoverBackgroundColor:'#6B55C9',
+          borderRadius:8, borderSkipped:false, maxBarThickness:38, order:2}
+      ]},
     options:{responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
       plugins:{legend:{labels:{color:'#1F2A44', font:{family:'Figtree',size:12}, padding:14}}},
-      scales:{x:{ticks:{color:'#5A6478', font:{family:'JetBrains Mono',size:10}}, grid:{display:false}},
-              y:{ticks:{color:'#5A6478', font:{family:'JetBrains Mono',size:10}}, grid:{color:'#EEF1F6'}, beginAtZero:true, afterFit:sc=>{sc.width=44;}}}}
+      scales:{x:{ticks:{color:'#5A6478', font:mono}, grid:{display:false}},
+              y:{position:'left', beginAtZero:true, ticks:{color:'#6B55C9', font:mono}, grid:{color:'#EEF1F6'}, afterFit:sc=>{sc.width=44;}},
+              y2:{position:'right', beginAtZero:true, ticks:{color:'#1a3c78', font:mono}, grid:{display:false}, afterFit:sc=>{sc.width=44;}}}}
   });
 }
 
